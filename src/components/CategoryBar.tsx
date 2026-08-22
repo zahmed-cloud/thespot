@@ -27,7 +27,11 @@ export default function CategoryBar({ active }: { active: string | null }) {
     if (!el) return;
     pill.style.width = `${el.offsetWidth}px`;
     pill.style.transform = `translateX(${el.offsetLeft}px)`;
-    el.scrollIntoView({ block: "nearest", inline: "nearest" });
+    // scroll the BAR horizontally only — scrollIntoView could scroll
+    // the whole page on load of a shared category url
+    const target = el.offsetLeft - bar.clientWidth / 2 + el.offsetWidth / 2;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    bar.scrollTo({ left: Math.max(0, target), behavior: reduced ? "auto" : "smooth" });
   }, [selected]);
 
   function pick(slug: string | null) {

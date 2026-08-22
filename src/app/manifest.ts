@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "thespot.lol",
     short_name: "thespot",
     description:
-      "a public leaderboard where rank is decided by one thing: how much you paid.",
+      "a public leaderboard where your rank is decided by one thing: how much you have paid. $5 gets you on.",
     start_url: "/",
     display: "browser",
     background_color: "#F7F8FA",

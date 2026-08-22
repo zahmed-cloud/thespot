@@ -26,7 +26,7 @@ export default function FooterTotal({ totalCents }: { totalCents: number }) {
       <p className="big">
         <DigitRoll text={text} />
       </p>
-      <p className="hours">
+      <p className="hours" suppressHydrationWarning>
         since it went up {hours.toLocaleString("en-US")}{" "}
         {hours === 1 ? "hour" : "hours"} ago
       </p>

@@ -44,16 +44,31 @@ export default function Hero({
 
   // follow the live top price until the visitor takes the number over.
   // external arrivals roll; keystrokes never do.
+  const shownExt = useRef<string | null>(null);
+  const extTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (bidTouched) return;
     const next = String(Math.max(5, Math.floor(topTotalCents / 100) + 1));
-    setRaw((prev) => {
-      if (prev === next) return prev;
-      setExtRoll(true);
-      setTimeout(() => setExtRoll(false), 300);
-      return next;
-    });
+    if (shownExt.current === null) {
+      shownExt.current = next; // first paint: no animation
+      return;
+    }
+    if (shownExt.current === next) return;
+    shownExt.current = next;
+    setRaw(next);
+    // restart the roll cleanly even when updates arrive back to back
+    setExtRoll(false);
+    requestAnimationFrame(() => setExtRoll(true));
+    if (extTimer.current) clearTimeout(extTimer.current);
+    extTimer.current = setTimeout(() => setExtRoll(false), 300);
   }, [topTotalCents, bidTouched]);
+
+  useEffect(
+    () => () => {
+      if (extTimer.current) clearTimeout(extTimer.current);
+    },
+    []
+  );
 
   // one-time first-visit affordance: a pulse and a dashed "this is
   // editable" underline that fades after 4s. never seen again.

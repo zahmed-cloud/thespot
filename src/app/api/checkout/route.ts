@@ -127,6 +127,13 @@ export async function POST(req: Request) {
     );
   }
 
+  if (!process.env.POLAR_ACCESS_TOKEN || !process.env.POLAR_PRODUCT_ID) {
+    return NextResponse.json(
+      { error: "payments are not wired up yet." },
+      { status: 503 }
+    );
+  }
+
   const polar = new Polar({
     accessToken: process.env.POLAR_ACCESS_TOKEN,
     server: process.env.POLAR_SERVER === "production" ? "production" : "sandbox",

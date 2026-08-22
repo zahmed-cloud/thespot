@@ -434,7 +434,9 @@ button {
 }
 
 .hero-price input:focus-visible {
+  /* keyboard users get an underline; the caret alone is not enough */
   outline: none;
+  box-shadow: 0 3px 0 0 var(--accent);
 }
 
 /* one-time first-visit affordance: a single 600ms pulse, then never again */
@@ -1418,6 +1420,12 @@ button {
 
   .bid-form select {
     flex: 1;
+  }
+
+  /* money-adjacent controls need real touch targets */
+  .stepper {
+    width: 44px;
+    height: 44px;
   }
 
   .row {

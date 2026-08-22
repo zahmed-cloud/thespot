@@ -52,24 +52,35 @@ export async function POST(req: Request) {
 
     // the real paid amount comes from the order, never from metadata.
     // netAmount is what the buyer chose to pay, before polar's
-    // merchant-of-record tax on top.
+    // merchant-of-record tax on top. odd cents (a $5.50 pwyw edit, a
+    // future discount) are floored to whole dollars for the credit.
     const amountCents = order.netAmount;
+    const flooredCents = Number.isInteger(amountCents)
+      ? Math.floor(amountCents / 100) * 100
+      : 0;
     const isTopup = str(meta.is_topup) === "true";
     const minCents = isTopup ? 100 : 500;
 
-    if (!identityKey || !displayUrl || !title) {
-      // log the FULL payload so a skipped order can be reconciled by hand
-      console.error("order.paid missing metadata", order.id, raw);
-      // 200: retrying will never fix missing metadata
-      return NextResponse.json({ received: true, skipped: "bad metadata" });
-    }
-    if (
-      !Number.isInteger(amountCents) ||
-      amountCents < minCents ||
-      amountCents % 100 !== 0
-    ) {
-      console.error("order.paid invalid amount", order.id, amountCents, raw);
-      return NextResponse.json({ received: true, skipped: "bad amount" });
+    if (!identityKey || !displayUrl || !title || flooredCents < minCents) {
+      // a verified PAID order must never vanish: park it as
+      // needs_review (idempotent on polar_order_id) so it can be
+      // credited or refunded by hand, and log the full payload
+      console.error("order.paid needs review", order.id, raw);
+      const { error: reviewErr } = await db.from("payments").upsert(
+        {
+          polar_order_id: order.id,
+          identity_key: identityKey || "unknown",
+          amount_cents: Number.isInteger(amountCents) ? amountCents : 0,
+          status: "needs_review",
+          raw_payload: JSON.parse(raw),
+        },
+        { onConflict: "polar_order_id", ignoreDuplicates: true }
+      );
+      if (reviewErr) {
+        console.error("needs_review insert failed", order.id, reviewErr);
+        return NextResponse.json({ error: "db write failed" }, { status: 500 });
+      }
+      return NextResponse.json({ received: true, skipped: "needs review" });
     }
 
     // single transactional rpc: insert the payments row (unique
@@ -80,7 +91,7 @@ export async function POST(req: Request) {
       p_display_url: displayUrl,
       p_title: title,
       p_description: description,
-      p_amount_cents: amountCents,
+      p_amount_cents: flooredCents,
       p_category: category,
       p_favicon_url: faviconUrl,
       p_raw: JSON.parse(raw),

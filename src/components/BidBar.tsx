@@ -8,8 +8,9 @@ import { formatDollars } from "@/lib/rank";
  */
 export default function BidBar({ bidCents }: { bidCents: number }) {
   function jump() {
-    document.getElementById("bid")?.scrollIntoView({ behavior: "smooth" });
-    setTimeout(() => document.getElementById("bid-url")?.focus(), 450);
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    document.getElementById("bid")?.scrollIntoView({ behavior: reduced ? "auto" : "smooth" });
+    setTimeout(() => document.getElementById("bid-url")?.focus(), reduced ? 0 : 450);
   }
 
   return (

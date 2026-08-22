@@ -25,26 +25,31 @@ export default function Board({
   categoryLabelText?: string | null;
 }) {
   const itemRefs = useRef<Map<string, HTMLLIElement>>(new Map());
-  const prevRects = useRef<Map<string, DOMRect>>(new Map());
+  const prevTops = useRef<Map<string, number>>(new Map());
 
   useLayoutEffect(() => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const nextRects = new Map<string, DOMRect>();
+    const nextTops = new Map<string, number>();
 
     itemRefs.current.forEach((el, id) => {
-      const rect = el.getBoundingClientRect();
-      nextRects.set(id, rect);
+      // document-space position: viewport rects change when the user
+      // scrolls, which is not a move
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      nextTops.set(id, top);
       if (reduced) return;
 
-      const prev = prevRects.current.get(id);
-      if (!prev) return;
-      const dy = prev.top - rect.top;
+      const prev = prevTops.current.get(id);
+      if (prev === undefined) return;
+      const dy = prev - top;
       if (Math.abs(dy) < 1) return;
 
-      // FLIP: jump to the old position, then transition to none
+      // FLIP: snap without ANY transition (the base .row hover
+      // transition would otherwise animate the snap away), then play
       el.classList.remove("moving");
+      el.style.transition = "none";
       el.style.transform = `translateY(${dy}px)`;
       void el.offsetHeight;
+      el.style.transition = "";
       el.classList.add("moving");
       el.style.transform = "";
       el.addEventListener(
@@ -54,7 +59,7 @@ export default function Board({
       );
     });
 
-    prevRects.current = nextRects;
+    prevTops.current = nextTops;
   }, [rows]);
 
   if (rows.length === 0) {
@@ -140,7 +145,7 @@ export default function Board({
                 {row.description && (
                   <div className="entry-desc">{row.description}</div>
                 )}
-                <div className="entry-meta">
+                <div className="entry-meta" suppressHydrationWarning>
                   {timeAgo(row.updated_at)} · {categoryLabel(row.category)} ·{" "}
                   <a href={`/r/${row.id}`} target="_blank" rel="nofollow noopener">
                     {row.clicks.toLocaleString("en-US")} clicks ↗

@@ -28,6 +28,7 @@ export default function BoardApp({
   const dataRef = useRef(data);
   dataRef.current = data;
   const timeouts = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const fetchSeq = useRef(0);
 
   // navigation lands a fresh server render; sync it in without remounting
   useEffect(() => {
@@ -56,25 +57,42 @@ export default function BoardApp({
     const params = new URLSearchParams();
     if (category) params.set("category", category);
     if (dataRef.current.page > 1) params.set("page", String(dataRef.current.page));
+    const mySeq = ++fetchSeq.current;
     try {
       const [boardRes, actRes] = await Promise.all([
         fetch(`/api/board?${params}`, { cache: "no-store" }),
         fetch("/api/activity", { cache: "no-store" }),
       ]);
+      // a response for an older category/page must not clobber newer data
+      if (mySeq !== fetchSeq.current) return;
       if (boardRes.ok) {
         const next = (await boardRes.json()) as BoardPage;
-        const prevById = new Map(
-          dataRef.current.rows.map((r) => [r.id, r.total_paid])
-        );
-        for (const row of next.rows) {
-          const prev = prevById.get(row.id);
-          if (prev === undefined || prev !== row.total_paid) glowRow(row.id);
+        if (mySeq !== fetchSeq.current) return;
+        const fingerprint = (d: BoardPage) =>
+          d.rows.map((r) => `${r.id}:${r.total_paid}:${r.clicks}`).join("|") +
+          `#${d.total}#${d.topTotalCents}`;
+        if (fingerprint(next) !== fingerprint(dataRef.current)) {
+          const prevById = new Map(
+            dataRef.current.rows.map((r) => [r.id, r.total_paid])
+          );
+          for (const row of next.rows) {
+            const prev = prevById.get(row.id);
+            if (prev === undefined || prev !== row.total_paid) glowRow(row.id);
+          }
+          setData(next);
         }
-        setData(next);
       }
       if (actRes.ok) {
         const json = (await actRes.json()) as { activity: ActivityItem[] };
-        if (json.activity) setActivity(json.activity);
+        if (mySeq !== fetchSeq.current) return;
+        if (json.activity) {
+          setActivity((prev) =>
+            prev[0]?.id === json.activity[0]?.id &&
+            prev.length === json.activity.length
+              ? prev
+              : json.activity
+          );
+        }
       }
     } catch {
       // keep last known state; the next poll retries
@@ -106,6 +124,9 @@ export default function BoardApp({
       clearInterval(poll);
       channel?.unsubscribe();
       activeTimeouts.forEach(clearTimeout);
+      activeTimeouts.clear();
+      // timers are gone, so no glow would ever clear itself
+      setGlowing(new Set());
     };
   }, [refetch]);
 

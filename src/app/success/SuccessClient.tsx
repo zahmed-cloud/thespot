@@ -30,6 +30,11 @@ export default function SuccessClient() {
     const query = new URLSearchParams();
     const checkoutId = params.get("checkout_id");
     const ref = params.get("ref");
+    if (!checkoutId && !ref) {
+      // nothing to poll for — someone typed /success by hand
+      window.location.replace("/");
+      return;
+    }
     if (checkoutId) query.set("checkout_id", checkoutId);
     if (ref) query.set("ref", ref);
 
