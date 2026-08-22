@@ -1242,6 +1242,79 @@ button {
   color: var(--text);
 }
 
+/* ---------- return pages (/success, /cancelled) ---------- */
+
+.return-page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 96px 20px 120px;
+  text-align: center;
+}
+
+.return-page h1 {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin-bottom: 12px;
+}
+
+.return-sub {
+  font-size: 14px;
+  color: var(--text-2);
+}
+
+.return-sub a {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.return-row {
+  margin: 28px 0;
+  text-align: left;
+}
+
+.return-btn {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 8px;
+  padding: 0 24px;
+}
+
+.live-dot.big {
+  display: block;
+  width: 10px;
+  height: 10px;
+  margin: 0 auto 20px;
+}
+
+/* ---------- skeletons: right tier heights, no layout shift ----------
+   note: no root loading.tsx on purpose. next 15.5 + a dynamic root
+   layout (cookies()) left the streamed page segment permanently
+   unhydrated in production builds when one existed. pages are fully
+   server-rendered in one pass and client navs keep the previous board
+   visible, so nothing blank ever shows. classes kept for client use. */
+
+.skel-row {
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  animation: skel-pulse 1.4s ease-in-out infinite;
+}
+
+.skel-row.s1 { height: 92px; background: var(--t1-wash), var(--surface); }
+.skel-row.s2 { height: 88px; }
+.skel-row.s3 { height: 84px; }
+.skel-row.s4 { height: 66px; }
+
+@keyframes skel-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skel-row { animation: none; }
+}
+
 /* ---------- inner pages ---------- */
 
 .page {

@@ -17,10 +17,12 @@ export default function Board({
   rows,
   glowing,
   afterTop3,
+  categoryLabelText,
 }: {
   rows: RankedListing[];
   glowing: Set<string>;
   afterTop3?: React.ReactNode;
+  categoryLabelText?: string | null;
 }) {
   const itemRefs = useRef<Map<string, HTMLLIElement>>(new Map());
   const prevRects = useRef<Map<string, DOMRect>>(new Map());
@@ -58,7 +60,9 @@ export default function Board({
   if (rows.length === 0) {
     return (
       <p className="empty-state">
-        nobody has paid yet. five dollars owns the whole thing right now.
+        {categoryLabelText
+          ? `nothing in ${categoryLabelText} yet. $5 makes you #1 in here.`
+          : "nobody has paid yet. five dollars owns the whole thing right now."}
       </p>
     );
   }

@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { categoryLabel } from "@/lib/categories";
 import { browserClient } from "@/lib/supabase-browser";
-import { formatDollars, previewRank } from "@/lib/rank";
+import { formatDollars } from "@/lib/rank";
 import type { ActivityItem, BoardPage } from "@/lib/types";
 import ActivityStrip from "./ActivityStrip";
 import BidBar from "./BidBar";
@@ -25,7 +26,6 @@ export default function BoardApp({
   const [data, setData] = useState<BoardPage>(initial);
   const [activity, setActivity] = useState<ActivityItem[]>(initialActivity);
   const [glowing, setGlowing] = useState<Set<string>>(new Set());
-  const [notice, setNotice] = useState<string | null>(null);
   const dataRef = useRef(data);
   dataRef.current = data;
   const timeouts = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
@@ -110,20 +110,6 @@ export default function BoardApp({
     };
   }, [refetch]);
 
-  // post-checkout notice: /?paid=1&key=example.com
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("paid") !== "1") return;
-    const key = params.get("key");
-    const row = key ? data.totals.find((r) => r.identity_key === key) : null;
-    setNotice(
-      row
-        ? `you are #${previewRank(data.totals, row.total_paid, row)}. enjoy it while it lasts.`
-        : "payment received. your spot lands when it clears, usually within a minute."
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data]);
-
   const totalRaisedCents = data.totals.reduce((sum, r) => sum + r.total_paid, 0);
   const top3 = data.rows.filter((r) => r.rank <= 3);
   const showStripAfterTop3 = !category && data.page === 1 && top3.length > 0;
@@ -145,20 +131,13 @@ export default function BoardApp({
 
       {categoryBar}
 
-      {notice && (
-        <div className="notice">
-          <div className="notice-inner" role="status">
-            {notice}
-          </div>
-        </div>
-      )}
-
       <main className="board-section container">
         {!showStripAfterTop3 && <ActivityStrip items={activity} />}
         <Board
           rows={data.rows}
           glowing={glowing}
           afterTop3={showStripAfterTop3 ? <ActivityStrip items={activity} /> : null}
+          categoryLabelText={category ? categoryLabel(category) : null}
         />
         <Pagination
           page={data.page}

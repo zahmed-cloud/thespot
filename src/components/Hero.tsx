@@ -70,6 +70,25 @@ export default function Hero({
     };
   }, []);
 
+  // returning from /cancelled: restore what they had typed
+  useEffect(() => {
+    if (!new URLSearchParams(window.location.search).has("restore")) return;
+    try {
+      const saved = JSON.parse(sessionStorage.getItem("spot-form") ?? "null");
+      if (!saved) return;
+      setUrl(saved.url ?? "");
+      setTitle(saved.title ?? "");
+      setDescription(saved.description ?? "");
+      setCategory(saved.category ?? "other");
+      if (saved.raw) {
+        setRaw(String(saved.raw));
+        setBidTouched(true);
+      }
+    } catch {
+      // a corrupt saved form is not worth surfacing
+    }
+  }, []);
+
   // restore the caret after a formatting re-render
   useLayoutEffect(() => {
     const el = inputRef.current;
@@ -185,13 +204,18 @@ export default function Hero({
       });
       const json = await res.json();
       if (!res.ok || !json.url) {
-        setError(json.error ?? "did not go through. no money moved. try again.");
+        setError(json.error ?? "could not start checkout. no money moved.");
         setSubmitting(false);
         return;
       }
+      // keep the form recoverable if they back out at polar
+      sessionStorage.setItem(
+        "spot-form",
+        JSON.stringify({ url: url.trim(), title, description, category, raw })
+      );
       window.location.href = json.url;
     } catch {
-      setError("did not go through. no money moved. try again.");
+      setError("could not start checkout. no money moved.");
       setSubmitting(false);
     }
   }

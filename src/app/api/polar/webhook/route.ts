@@ -9,23 +9,27 @@ import { serviceClient } from "@/lib/supabase-server";
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
+  const secret = process.env.POLAR_WEBHOOK_SECRET;
+  if (!secret) {
+    console.error("webhook received but POLAR_WEBHOOK_SECRET is missing");
+    return NextResponse.json({ error: "not configured" }, { status: 500 });
+  }
+
   // raw bytes first: signature verification runs over the exact body,
   // so nothing may parse it as json before this point.
   const raw = await req.text();
 
   let event: ReturnType<typeof validateEvent>;
   try {
-    event = validateEvent(
-      raw,
-      Object.fromEntries(req.headers.entries()),
-      process.env.POLAR_WEBHOOK_SECRET ?? ""
-    );
+    event = validateEvent(raw, Object.fromEntries(req.headers.entries()), secret);
   } catch (err) {
-    if (err instanceof WebhookVerificationError) {
-      console.warn("webhook signature verification failed");
-      return NextResponse.json({ error: "invalid signature" }, { status: 403 });
+    // anything that fails validation — bad signature, missing headers,
+    // malformed timestamp — is rejected without touching the database
+    if (!(err instanceof WebhookVerificationError)) {
+      console.warn("webhook validation threw unexpectedly", err);
     }
-    throw err;
+    console.warn("webhook rejected: signature validation failed");
+    return NextResponse.json({ error: "invalid signature" }, { status: 403 });
   }
 
   const db = serviceClient();

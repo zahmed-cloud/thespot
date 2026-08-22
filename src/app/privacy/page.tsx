@@ -40,10 +40,16 @@ export default function Privacy() {
         kept for abuse prevention.
       </p>
 
-      <h2>contact</h2>
+      <h2>cookies</h2>
       <p>
-        for privacy requests, use the contact details on the receipt polar
-        emailed you after checkout.
+        one cookie: your theme preference. no analytics cookies, no
+        advertising trackers.
+      </p>
+
+      <h2>contact and removal</h2>
+      <p>
+        for privacy requests or to ask for a listing's text to be removed,
+        write to <a href="mailto:support@thespot.lol">support@thespot.lol</a>.
       </p>
 
       <p>

@@ -1,22 +1,27 @@
 import { ImageResponse } from "next/og";
-import { getBoard } from "@/lib/board";
+import { getStats } from "@/lib/board";
 
 export const runtime = "nodejs";
-export const alt = "thespot.lol — the top spot costs";
-export const size = { width: 1200, height: 630 };
-export const contentType = "image/png";
+export const revalidate = 60;
 
-/** The share image carries the live top-spot price. */
-export default async function OpengraphImage() {
+/**
+ * The share card, generated live: every share shows the real current
+ * top-spot price and listing count. Cached 60s so a spike does not
+ * hammer the database.
+ */
+export async function GET() {
   let topCents = 0;
+  let listings = 0;
   try {
-    topCents = (await getBoard())[0]?.total_paid ?? 0;
+    const stats = await getStats();
+    topCents = stats.top_bid_cents;
+    listings = stats.total_listings;
   } catch {
-    // price stays 0 if the db is unreachable; the image still renders
+    // the image still renders with zeros if the db is unreachable
   }
   const price = `$${Math.round(topCents / 100).toLocaleString("en-US")}`;
 
-  return new ImageResponse(
+  const image = new ImageResponse(
     (
       <div
         style={{
@@ -32,7 +37,7 @@ export default async function OpengraphImage() {
           fontFamily: "system-ui, sans-serif",
         }}
       >
-        <svg width="120" height="120" viewBox="0 0 32 32" fill="none">
+        <svg width="96" height="96" viewBox="0 0 32 32" fill="none">
           <path
             d="M16 3 A13 13 0 1 1 15.9 3"
             stroke="#0B0D12"
@@ -43,24 +48,33 @@ export default async function OpengraphImage() {
           />
           <circle cx="16" cy="16" r="6" fill="#0B0D12" />
         </svg>
-        <div style={{ marginTop: 36, fontSize: 28, color: "#4A5060" }}>
+        <div style={{ marginTop: 30, fontSize: 30, color: "#4A5060" }}>
           the top spot costs
         </div>
         <div
           style={{
-            marginTop: 8,
-            fontSize: 128,
+            marginTop: 6,
+            fontSize: 140,
             fontWeight: 700,
             letterSpacing: "-0.045em",
           }}
         >
           {price}
         </div>
-        <div style={{ marginTop: 20, fontSize: 24, color: "#868D9C" }}>
-          thespot.lol — rank is the money. that is the whole thing.
+        <div style={{ marginTop: 16, fontSize: 30, fontWeight: 600 }}>
+          $5 gets you on the board
+        </div>
+        <div style={{ marginTop: 14, fontSize: 24, color: "#868D9C" }}>
+          {`thespot.lol · ${listings.toLocaleString("en-US")} listings and counting`}
         </div>
       </div>
     ),
-    size
+    { width: 1200, height: 630 }
   );
+
+  image.headers.set(
+    "Cache-Control",
+    "public, s-maxage=60, stale-while-revalidate=300"
+  );
+  return image;
 }

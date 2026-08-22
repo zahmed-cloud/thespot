@@ -142,11 +142,17 @@ export async function POST(req: Request) {
     encodePlatform(identity.identityKey) ??
     (identity.kind === "url" ? await resolveFavicon(identity.identityKey) : null);
 
+  const clientRef = randomUUID();
+
   try {
     const checkout = await polar.checkouts.create({
       products: [process.env.POLAR_PRODUCT_ID!],
       amount: bidCents,
-      successUrl: `${site}/?paid=1&key=${encodeURIComponent(identity.identityKey)}`,
+      // polar substitutes {CHECKOUT_ID}; /success polls listing-status
+      // with it until the webhook lands
+      successUrl: `${site}/success?checkout_id={CHECKOUT_ID}&ref=${clientRef}&key=${encodeURIComponent(identity.identityKey)}`,
+      // where the buyer lands if they back out of the hosted checkout
+      returnUrl: `${site}/cancelled`,
       // metadata identifies WHO. the webhook reads the amount from the
       // order object, never from here, so a tampered checkout url cannot
       // buy a bigger total than was actually paid.
@@ -160,7 +166,7 @@ export async function POST(req: Request) {
         bid_cents: String(bidCents),
         is_topup: String(isTopup),
         existing_total_cents: String(existing?.total_paid ?? 0),
-        client_ref: randomUUID(),
+        client_ref: clientRef,
       },
     });
     return NextResponse.json({ url: checkout.url });

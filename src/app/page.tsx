@@ -1,9 +1,30 @@
+import type { Metadata } from "next";
 import BoardApp from "@/components/BoardApp";
 import CategoryBar from "@/components/CategoryBar";
 import { getActivity, getBoardPage } from "@/lib/board";
-import { isCategory } from "@/lib/categories";
+import { categoryLabel, isCategory } from "@/lib/categories";
 
 export const dynamic = "force-dynamic";
+
+// filtered views are individually indexable: "ai tools on thespot.lol"
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string }>;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  if (!params.category || !isCategory(params.category)) return {};
+  const label = categoryLabel(params.category);
+  return {
+    title: `${label} on thespot.lol`,
+    description: `the ${label} leaderboard where rank is decided by how much you have paid. $5 gets you on.`,
+    alternates: { canonical: `/?category=${params.category}` },
+    openGraph: {
+      title: `${label} on thespot.lol`,
+      url: `/?category=${params.category}`,
+    },
+  };
+}
 
 export default async function Home({
   searchParams,

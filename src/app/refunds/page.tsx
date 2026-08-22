@@ -22,9 +22,12 @@ export default function Refunds() {
         product working as described, not grounds for a refund.
       </p>
       <p>
-        if you were charged in error, for example a duplicate charge for a
-        single checkout, contact support through the merchant of record,
-        polar, using the receipt in your email, and it will be looked at.
+        your position is delivered the moment payment clears, and being
+        outbid later is the product working as described, not a failure of
+        delivery. if you were charged in error, for example a duplicate
+        charge for a single checkout, write to{" "}
+        <a href="mailto:support@thespot.lol">support@thespot.lol</a> and it
+        will be looked at.
       </p>
       <p>
         <Link href="/">back to the board</Link>
