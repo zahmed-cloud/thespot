@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { categoryLabel } from "@/lib/categories";
 import { browserClient } from "@/lib/supabase-browser";
-import { formatDollars } from "@/lib/rank";
 import type { ActivityItem, BoardPage } from "@/lib/types";
 import ActivityStrip from "./ActivityStrip";
 import BidBar from "./BidBar";
@@ -116,17 +115,6 @@ export default function BoardApp({
 
   return (
     <>
-      <div className="live-wrap">
-        <span className="live-pill">
-          <span className="live-dot" aria-hidden="true" />
-          <span className="mono">{data.totals.length.toLocaleString("en-US")}</span>
-          listings
-          <span aria-hidden="true">·</span>
-          <span className="mono">{formatDollars(totalRaisedCents)}</span>
-          raised
-        </span>
-      </div>
-
       <Hero totals={data.totals} topTotalCents={data.topTotalCents} />
 
       {categoryBar}

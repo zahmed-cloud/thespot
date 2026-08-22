@@ -14,6 +14,9 @@ export default function FooterTotal({ totalCents }: { totalCents: number }) {
     return () => clearInterval(t);
   }, []);
 
+  // pre-launch: no money, no band. it appears with the first payment.
+  if (totalCents <= 0) return null;
+
   const text = `$${Math.round(totalCents / 100).toLocaleString("en-US")}`;
 
   return (

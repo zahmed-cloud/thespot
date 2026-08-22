@@ -82,11 +82,11 @@ export default async function RootLayout({
           <span>
             built by{" "}
             <a
-              href="https://x.com/getascent"
+              href="https://www.linkedin.com/in/getascent/"
               target="_blank"
               rel="noopener noreferrer"
             >
-              @getascent
+              Jam
             </a>
             . no ads, no api keys, no revenue share.
           </span>
