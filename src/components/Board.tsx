@@ -64,14 +64,15 @@ export default function Board({
           <>
             <p className="empty-big">{categoryLabelText} has no king yet.</p>
             <p className="empty-sub">
-              five dollars takes #1 in {categoryLabelText} right now. whole category, one bill.
+              $5 takes #1 in {categoryLabelText} right now. whole category, one
+              bill. move before someone else does.
             </p>
           </>
         ) : (
           <>
             <p className="empty-big">the entire board is up for grabs.</p>
             <p className="empty-sub">
-              nobody has paid a cent. five dollars makes you the first #1 in
+              be the first name up here. $5 crowns you the first #1 in
               thespot.lol history. it will never be this cheap again.
             </p>
           </>
