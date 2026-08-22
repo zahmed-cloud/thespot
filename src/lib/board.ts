@@ -1,6 +1,7 @@
 import { serviceClient } from "./supabase-server";
 import { rankBoard } from "./rank";
 import { CATEGORIES } from "./categories";
+import { encodePlatform } from "./logos";
 import type {
   ActivityItem,
   BoardPage,
@@ -11,41 +12,54 @@ import type {
 
 export const PER_PAGE = 50;
 
-export function faviconFor(identityKey: string): string | null {
-  if (identityKey.startsWith("x:")) return null;
-  const domain = identityKey.split("/")[0];
-  return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`;
-}
-
 // ------------------------------------------------------------------
 // demo data, shown only when supabase env vars are absent so the
 // design can be worked on before the project is wired up. ~58 rows
-// so every tier, both dividers, and page 2 all exist.
+// covering every logo path: platform marks, real favicons, and
+// generated gradient tiles. every tier, all dividers, and page 2 exist.
 // ------------------------------------------------------------------
+
+/** real domains whose favicons resolve; everything else gets a tile */
+const REAL_FAVICON = new Set([
+  "requesty.ai",
+  "plaintextsports.com",
+  "polar.sh",
+  "supabase.com",
+]);
 
 const DEMO_TOP: Array<[string, string, string, string, number, number]> = [
   // key, title, description, category, dollars, clicks
   ["requesty.ai", "requesty", "one api for every llm", "ai-tools", 14023, 1113],
   ["outboundos.app", "outbound os", "free linkedin client-getting tool", "marketing", 8100, 642],
-  ["coldplunge.dev", "cold plunge tracker", "logs your plunges. that is it.", "health", 5250, 398],
-  ["x:jamil", "@jamil", "posts about building things", "other", 3000, 261],
+  ["x:jamil", "@jamil", "posts about building things", "other", 5250, 398],
+  ["github.com/shipfast", "ship fast club", "accountability group for launching", "dev-tools", 3000, 261],
   ["ratemysetup.lol", "rate my setup", "strangers judge your desk", "design", 2400, 244],
   ["tinyinvoice.co", "tiny invoice", "invoices for people who hate invoices", "saas", 1900, 187],
-  ["shipfast.club", "ship fast club", "accountability group for launching", "other", 1500, 149],
+  ["quietletter.substack.com", "quiet letter", "a slow newsletter about focus", "newsletters", 1500, 149],
   ["x:sana_builds", "@sana_builds", "shipping one product a month", "other", 1200, 129],
-  ["keywordgap.io", "keyword gap", "find what your rivals rank for", "seo", 990, 118],
+  ["linkedin.com/company/ascent", "ascent", "gtm engineering for b2b founders", "agencies", 990, 118],
   ["plaintextsports.com", "plain text sports", "scores with zero javascript", "games", 850, 112],
   ["darkmodemaker.com", "dark mode maker", "adds dark mode to any site", "dev-tools", 720, 96],
-  ["hiredev.today", "hire dev today", "vetted contractors in 48 hours", "jobs", 640, 88],
+  ["youtube.com/@buildinpublic", "build in public", "weekly teardown videos", "marketing", 640, 88],
   ["chartpaste.com", "chart paste", "paste data, get a chart", "dev-tools", 560, 81],
   ["copydeck.ai", "copy deck", "landing page copy that converts", "marketing", 500, 74],
   ["stackedwallet.xyz", "stacked wallet", "watch every chain in one place", "crypto", 450, 69],
-  ["quietletter.com", "quiet letter", "a slow newsletter about focus", "newsletters", 400, 61],
+  ["twitch.tv/latenightdev", "late night dev", "live coding at 2am", "games", 400, 61],
   ["pixelgrader.com", "pixel grader", "roasts your ui in ten seconds", "design", 360, 55],
-  ["sundaycode.club", "sunday code club", "a newsletter for weekend builders", "newsletters", 320, 49],
+  ["figma.com/@pixelgrader", "grader kit", "the roast checklist as a figma file", "design", 320, 49],
   ["formspree.lol", "form spree", "forms without a backend", "dev-tools", 290, 44],
   ["leadmagnet.gg", "lead magnet", "swipe file of 400 lead magnets", "marketing", 260, 40],
 ];
+
+function demoLogo(key: string): string | null {
+  const platform = encodePlatform(key);
+  if (platform) return platform;
+  const domain = key.split("/")[0];
+  if (REAL_FAVICON.has(domain)) {
+    return `https://icons.duckduckgo.com/ip3/${domain}.ico`;
+  }
+  return null; // gradient tile
+}
 
 const DEMO_ROWS: Listing[] = (() => {
   const rows: Listing[] = [];
@@ -61,12 +75,12 @@ const DEMO_ROWS: Listing[] = (() => {
       total_paid: dollars * 100,
       clicks,
       category,
-      favicon_url: faviconFor(key),
+      favicon_url: demoLogo(key),
       created_at: created,
       updated_at: new Date(now - (i + 2) * 31e5).toISOString(),
     });
   });
-  // long tail: 38 more rows, $5 to $120, to fill tier 4 and page 2
+  // long tail: 38 more rows, gradient tiles, to fill tier 4 and page 2
   for (let i = 0; i < 38; i++) {
     const key = `sideproject${i + 1}.dev`;
     const created = new Date(now - (20 - i / 4) * 36e5 * 3).toISOString();
@@ -79,7 +93,7 @@ const DEMO_ROWS: Listing[] = (() => {
       total_paid: Math.max(500, (120 - i * 3) * 100),
       clicks: Math.max(2, 40 - i),
       category: CATEGORIES[i % CATEGORIES.length].slug,
-      favicon_url: faviconFor(key),
+      favicon_url: null,
       created_at: created,
       updated_at: created,
     });
@@ -158,7 +172,7 @@ export async function getActivity(): Promise<ActivityItem[]> {
 
   if (!db) {
     // demo: fabricate recent bids from demo rows
-    const picks = [10, 0, 4, 14, 7];
+    const picks = [10, 0, 2, 14, 6];
     return picks.map((i, n) => {
       const row = DEMO_ROWS[i];
       return {
@@ -189,7 +203,7 @@ export async function getActivity(): Promise<ActivityItem[]> {
       id: p.id,
       listing_id: row?.id ?? null,
       title: row?.title ?? p.identity_key,
-      favicon_url: row?.favicon_url ?? faviconFor(p.identity_key),
+      favicon_url: row?.favicon_url ?? null,
       identity_key: p.identity_key,
       rank: row?.rank ?? null,
       bid_cents: p.amount_cents,

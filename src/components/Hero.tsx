@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CATEGORIES } from "@/lib/categories";
 import { normalizeIdentity } from "@/lib/identity";
 import { formatDollars, previewRank } from "@/lib/rank";
 import type { BoardTotal } from "@/lib/types";
+import DigitRoll from "./DigitRoll";
 
 /**
- * The hero is the number, not the button. Shows the bid, initialised to
- * one dollar over the current #1, steppable in $1 increments with a
- * digit-tick animation. The one-line form sits under it.
+ * The hero card. The number is the hero: the live price of #1 plus a
+ * dollar, steppable, with rolling digits. The bid form sits under it.
  */
 export default function Hero({
   totals,
@@ -42,12 +42,14 @@ export default function Hero({
   );
   const minimum = existing ? 1 : 5;
 
-  const helper = useMemo(() => {
+  const preview = useMemo(() => {
     if (url.trim() && !identity) return "that does not look like a url or handle.";
     const prospective = (existing?.total_paid ?? 0) + bid * 100;
     const rank = previewRank(totals, prospective, existing);
     const landing =
-      rank === 1 ? "this takes the top spot." : `this puts you at #${rank}.`;
+      rank === 1
+        ? "this takes #1. someone will take it back."
+        : `this puts you at #${rank}.`;
     if (existing) {
       const existingRank = previewRank(totals, existing.total_paid, existing);
       return `you are at ${formatDollars(existing.total_paid)} (#${existingRank}). ${landing}`;
@@ -88,126 +90,102 @@ export default function Hero({
       });
       const json = await res.json();
       if (!res.ok || !json.url) {
-        setError(json.error ?? "that did not go through. no money moved. try again.");
+        setError(json.error ?? "did not go through. no money moved. try again.");
         setSubmitting(false);
         return;
       }
       window.location.href = json.url;
     } catch {
-      setError("that did not go through. no money moved. try again.");
+      setError("did not go through. no money moved. try again.");
       setSubmitting(false);
     }
   }
 
-  return (
-    <section className="hero column">
-      <p className="hero-kicker">
-        {existing ? "your next bid" : "the top spot costs"}
-      </p>
-      <div className="hero-price-row">
-        <button
-          type="button"
-          className="stepper"
-          onClick={() => step(-1)}
-          disabled={bid <= minimum}
-          aria-label="one dollar less"
-        >
-          −
-        </button>
-        <TickingPrice dollars={bid} />
-        <button
-          type="button"
-          className="stepper"
-          onClick={() => step(1)}
-          aria-label="one dollar more"
-        >
-          +
-        </button>
-      </div>
-      <p className="hero-note">
-        new listings start at $5. paying less than the top still puts you on the board.
-      </p>
+  const priceText = `$${bid.toLocaleString("en-US")}`;
 
-      <form onSubmit={submit}>
-        <div className="submit-line">
-          <input
-            type="text"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="your url or @handle"
-            aria-label="your url or @handle"
-            required
-          />
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            aria-label="category"
+  return (
+    <section className="hero" id="bid">
+      <div className="hero-card">
+        <p className="hero-label">the top spot costs</p>
+        <div className="hero-price-row">
+          <button
+            type="button"
+            className="stepper"
+            onClick={() => step(-1)}
+            disabled={bid <= minimum}
+            aria-label="one dollar less"
           >
-            {CATEGORIES.map((c) => (
-              <option key={c.slug} value={c.slug}>
-                {c.label}
-              </option>
-            ))}
-          </select>
-          <button className="cta" type="submit" disabled={submitting}>
-            {submitting ? "opening checkout" : `bid ${formatDollars(bid * 100)}`}
+            −
+          </button>
+          <span className="hero-price" aria-label={priceText}>
+            <DigitRoll text={priceText} />
+          </span>
+          <button
+            type="button"
+            className="stepper"
+            onClick={() => step(1)}
+            aria-label="one dollar more"
+          >
+            +
           </button>
         </div>
+        <p className="hero-sub">
+          starts at $5. pay less than the top and you still land somewhere.
+        </p>
 
-        {identity && !existing && (
-          <div className="submit-detail">
+        <form onSubmit={submit}>
+          <div className="bid-form">
             <input
+              id="bid-url"
               type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              maxLength={60}
-              placeholder="title (optional)"
-              aria-label="title"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="your url or @handle"
+              aria-label="your url or @handle"
+              required
             />
-            <input
-              type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              maxLength={140}
-              placeholder="one line about it (optional)"
-              aria-label="one line about it"
-            />
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              aria-label="category"
+            >
+              {CATEGORIES.map((c) => (
+                <option key={c.slug} value={c.slug}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+            <button className="btn" type="submit" disabled={submitting}>
+              {submitting ? "opening checkout" : `bid ${formatDollars(bid * 100)}`}
+            </button>
           </div>
-        )}
 
-        <div className="helper">
-          <strong>{helper}</strong>
-        </div>
-        {error && <p className="form-error">{error}</p>}
-        <p className="helper">already listed? enter the same url and top up.</p>
-      </form>
+          {identity && !existing && (
+            <div className="hero-detail">
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                maxLength={60}
+                placeholder="title (optional)"
+                aria-label="title"
+              />
+              <input
+                type="text"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                maxLength={140}
+                placeholder="one line about it (optional)"
+                aria-label="one line about it"
+              />
+            </div>
+          )}
+
+          <p className="hero-note">{preview}</p>
+          {error && <p className="hero-error">{error}</p>}
+          <p className="hero-hint">already up there? same url, pay the difference.</p>
+        </form>
+      </div>
     </section>
-  );
-}
-
-/** Renders the price as digits; a changed digit ticks in from below. */
-function TickingPrice({ dollars }: { dollars: number }) {
-  const text = `$${dollars.toLocaleString("en-US")}`;
-  const prevRef = useRef(text);
-  const prev = prevRef.current;
-  useEffect(() => {
-    prevRef.current = text;
-  }, [text]);
-
-  return (
-    <span className="hero-price" aria-label={text}>
-      {text.split("").map((ch, i) => {
-        // compare aligned from the right so a length change only
-        // animates the digits that actually changed
-        const fromRight = text.length - i;
-        const prevCh = prev[prev.length - fromRight];
-        const changed = prevCh !== ch;
-        return (
-          <span key={`${fromRight}-${ch}`} className={`digit${changed ? " tick" : ""}`}>
-            {ch}
-          </span>
-        );
-      })}
-    </span>
   );
 }

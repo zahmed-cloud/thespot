@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "privacy — thespot.lol" };
 export default function Privacy() {
   return (
     <div className="page column">
-      <h1 className="display">privacy policy</h1>
+      <h1>privacy policy</h1>
 
       <h2>what we collect</h2>
       <p>

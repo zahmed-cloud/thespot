@@ -1,4 +1,5 @@
 import BoardApp from "@/components/BoardApp";
+import CategoryBar from "@/components/CategoryBar";
 import { getActivity, getBoardPage } from "@/lib/board";
 import { isCategory } from "@/lib/categories";
 
@@ -21,10 +22,10 @@ export default async function Home({
 
   return (
     <BoardApp
-      key={`${category ?? "all"}-${board.page}`}
       initial={board}
       initialActivity={activity}
       category={category}
+      categoryBar={<CategoryBar active={category} />}
     />
   );
 }

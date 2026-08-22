@@ -5,8 +5,8 @@ import { browserClient } from "@/lib/supabase-browser";
 import { formatDollars, previewRank } from "@/lib/rank";
 import type { ActivityItem, BoardPage } from "@/lib/types";
 import ActivityStrip from "./ActivityStrip";
+import BidBar from "./BidBar";
 import Board from "./Board";
-import CategoryChips from "./CategoryChips";
 import FooterTotal from "./FooterTotal";
 import Hero from "./Hero";
 import Pagination from "./Pagination";
@@ -15,33 +15,41 @@ export default function BoardApp({
   initial,
   initialActivity,
   category,
+  categoryBar,
 }: {
   initial: BoardPage;
   initialActivity: ActivityItem[];
   category: string | null;
+  categoryBar: React.ReactNode;
 }) {
   const [data, setData] = useState<BoardPage>(initial);
   const [activity, setActivity] = useState<ActivityItem[]>(initialActivity);
-  const [stamped, setStamped] = useState<Set<string>>(new Set());
+  const [glowing, setGlowing] = useState<Set<string>>(new Set());
   const [notice, setNotice] = useState<string | null>(null);
   const dataRef = useRef(data);
   dataRef.current = data;
   const timeouts = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
-  const stampRow = useCallback((id: string) => {
-    setStamped((prev) => new Set(prev).add(id));
+  // navigation lands a fresh server render; sync it in without remounting
+  useEffect(() => {
+    setData(initial);
+    setActivity(initialActivity);
+  }, [initial, initialActivity]);
+
+  const glowRow = useCallback((id: string) => {
+    setGlowing((prev) => new Set(prev).add(id));
     const existing = timeouts.current.get(id);
     if (existing) clearTimeout(existing);
     timeouts.current.set(
       id,
       setTimeout(() => {
-        setStamped((prev) => {
+        setGlowing((prev) => {
           const next = new Set(prev);
           next.delete(id);
           return next;
         });
         timeouts.current.delete(id);
-      }, 1140)
+      }, 720)
     );
   }, []);
 
@@ -61,7 +69,7 @@ export default function BoardApp({
         );
         for (const row of next.rows) {
           const prev = prevById.get(row.id);
-          if (prev === undefined || prev !== row.total_paid) stampRow(row.id);
+          if (prev === undefined || prev !== row.total_paid) glowRow(row.id);
         }
         setData(next);
       }
@@ -72,7 +80,7 @@ export default function BoardApp({
     } catch {
       // keep last known state; the next poll retries
     }
-  }, [category, stampRow]);
+  }, [category, glowRow]);
 
   // realtime nudges a debounced refetch; a 10s poll is the fallback
   useEffect(() => {
@@ -110,7 +118,7 @@ export default function BoardApp({
     const row = key ? data.totals.find((r) => r.identity_key === key) : null;
     setNotice(
       row
-        ? `you are at #${previewRank(data.totals, row.total_paid, row)}. someone will pass you.`
+        ? `you are #${previewRank(data.totals, row.total_paid, row)}. enjoy it while it lasts.`
         : "payment received. your spot lands when it clears, usually within a minute."
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -122,31 +130,34 @@ export default function BoardApp({
 
   return (
     <>
-      <div className="counter-pill-wrap column">
-        <span className="counter-pill">
+      <div className="live-wrap">
+        <span className="live-pill">
           <span className="live-dot" aria-hidden="true" />
-          {data.totals.length.toLocaleString("en-US")} listings ·{" "}
-          {formatDollars(totalRaisedCents)} raised
+          <span className="mono">{data.totals.length.toLocaleString("en-US")}</span>
+          listings
+          <span aria-hidden="true">·</span>
+          <span className="mono">{formatDollars(totalRaisedCents)}</span>
+          raised
         </span>
       </div>
 
       <Hero totals={data.totals} topTotalCents={data.topTotalCents} />
 
-      <CategoryChips active={category} />
+      {categoryBar}
 
       {notice && (
-        <div className="column">
-          <div className="notice" role="status">
+        <div className="notice">
+          <div className="notice-inner" role="status">
             {notice}
           </div>
         </div>
       )}
 
-      <main className="board-section column">
+      <main className="board-section container">
         {!showStripAfterTop3 && <ActivityStrip items={activity} />}
         <Board
           rows={data.rows}
-          stamped={stamped}
+          glowing={glowing}
           afterTop3={showStripAfterTop3 ? <ActivityStrip items={activity} /> : null}
         />
         <Pagination
@@ -158,6 +169,7 @@ export default function BoardApp({
       </main>
 
       <FooterTotal totalCents={totalRaisedCents} />
+      <BidBar bidCents={data.topTotalCents + 100} />
     </>
   );
 }

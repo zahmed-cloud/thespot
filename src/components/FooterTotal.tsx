@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { formatDollars } from "@/lib/rank";
+import DigitRoll from "./DigitRoll";
 
-const LAUNCH_AT =
-  process.env.NEXT_PUBLIC_LAUNCH_AT ?? "2026-08-23T00:00:00Z";
+const LAUNCH_AT = process.env.NEXT_PUBLIC_LAUNCH_AT ?? "2026-08-23T00:00:00Z";
 
-/** The screenshot-bait number. Hours since launch tick live. */
+/** The screenshot-bait number, with the same digit roll as the hero. */
 export default function FooterTotal({ totalCents }: { totalCents: number }) {
   const [hours, setHours] = useState(() => hoursSinceLaunch());
 
@@ -15,12 +14,17 @@ export default function FooterTotal({ totalCents }: { totalCents: number }) {
     return () => clearInterval(t);
   }, []);
 
+  const text = `$${Math.round(totalCents / 100).toLocaleString("en-US")}`;
+
   return (
     <section className="total-band">
       <p className="kicker">this stupid little board has taken</p>
-      <p className="big">{formatDollars(totalCents)}</p>
+      <p className="big">
+        <DigitRoll text={text} />
+      </p>
       <p className="hours">
-        in {hours.toLocaleString("en-US")} {hours === 1 ? "hour" : "hours"}
+        since it went up {hours.toLocaleString("en-US")}{" "}
+        {hours === 1 ? "hour" : "hours"} ago
       </p>
     </section>
   );

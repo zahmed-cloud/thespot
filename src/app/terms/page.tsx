@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "terms — thespot.lol" };
 export default function Terms() {
   return (
     <div className="page column">
-      <h1 className="display">terms of service</h1>
+      <h1>terms of service</h1>
       <p>by using thespot.lol or paying for a listing, you agree to these terms.</p>
 
       <h2>what you are buying</h2>

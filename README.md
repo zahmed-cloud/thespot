@@ -84,6 +84,26 @@ copy `.env.example` to `.env.local` and fill it in. also add `CLICK_SALT` (any l
 | `/?category=ai-tools` | filtered board with pond-local ranks, shareable url |
 | `/?page=2` | ranks 51+, server-rendered, crawlable |
 
+## logos
+
+resolved server-side at submit time and stored on the row in `favicon_url`:
+`platform:<id>` renders a bundled brand mark (x, github, linkedin, and 17
+more), an `https://` url renders a verified favicon, and `null` renders a
+deterministic gradient tile. nothing ever renders as a grey globe.
+
+backfill for rows created before v3 (clears unverified google favicon urls
+so platform marks and tiles take over):
+
+```sql
+update listings set favicon_url = null where favicon_url like '%google.com/s2%';
+```
+
+## theme
+
+light/dark via `data-theme` on `<html>`, stored in a cookie so the server
+renders the right theme on first paint; an inline head script covers the
+no-cookie prefers-dark case. no flash.
+
 ## moderation: wiping a row fast
 
 listings never lose their rank, but the text and link can be blanked in under a minute. supabase sql editor:

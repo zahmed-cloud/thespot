@@ -10,7 +10,7 @@ export default async function About() {
   const stats = await getStats();
   return (
     <div className="page column">
-      <h1 className="display">about</h1>
+      <h1>about</h1>
       <p>
         thespot.lol is a public leaderboard with one rule: your rank is the
         total amount of money you have paid. anyone can list a website or an

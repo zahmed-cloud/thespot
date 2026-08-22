@@ -4,20 +4,22 @@ import { Fragment, useLayoutEffect, useRef } from "react";
 import { categoryLabel } from "@/lib/categories";
 import { formatDollars, tierForRank } from "@/lib/rank";
 import type { RankedListing } from "@/lib/types";
-import Favicon from "./Favicon";
+import LogoTile from "./LogoTile";
+
+const TILE_SIZE = { 1: 48, 2: 40, 3: 36, 4: 32 } as const;
 
 /**
- * The board. Four visual tiers driven by rank, tier divider pills after
- * #10 and #20, FLIP reordering, and the PAID stamp on freshly credited
- * rows (ids present in `stamped`).
+ * The board. Rows are cards. Metal treatments for #1/#2/#3, tier
+ * dividers after 3, 10, and 20, FLIP reordering on the Apple curve,
+ * and a quiet accent glow on freshly credited rows (ids in `glowing`).
  */
 export default function Board({
   rows,
-  stamped,
+  glowing,
   afterTop3,
 }: {
   rows: RankedListing[];
-  stamped: Set<string>;
+  glowing: Set<string>;
   afterTop3?: React.ReactNode;
 }) {
   const itemRefs = useRef<Map<string, HTMLLIElement>>(new Map());
@@ -43,6 +45,11 @@ export default function Board({
       void el.offsetHeight;
       el.classList.add("moving");
       el.style.transform = "";
+      el.addEventListener(
+        "transitionend",
+        () => el.classList.remove("moving"),
+        { once: true }
+      );
     });
 
     prevRects.current = nextRects;
@@ -51,7 +58,7 @@ export default function Board({
   if (rows.length === 0) {
     return (
       <p className="empty-state">
-        nobody has paid yet. first one in takes the top for five dollars.
+        nobody has paid yet. five dollars owns the whole thing right now.
       </p>
     );
   }
@@ -62,13 +69,9 @@ export default function Board({
         const tier = tierForRank(row.rank);
         const prevRank = i > 0 ? rows[i - 1].rank : null;
         const classes = [
-          "board-row",
-          `t${tier}`,
-          row.rank === 1 ? "r1" : "",
-          tier === 1 && (i === rows.length - 1 || tierForRank(rows[i + 1].rank) !== 1)
-            ? "t1-last"
-            : "",
-          tier === 4 && row.rank % 2 === 0 ? "alt" : "",
+          "row",
+          row.rank <= 3 ? `r${row.rank}` : `t${tier}`,
+          glowing.has(row.id) ? "glow" : "",
         ]
           .filter(Boolean)
           .join(" ");
@@ -77,6 +80,11 @@ export default function Board({
           <Fragment key={row.id}>
             {afterTop3 && prevRank !== null && prevRank <= 3 && row.rank > 3 && (
               <li className="strip-li">{afterTop3}</li>
+            )}
+            {prevRank !== null && prevRank <= 3 && row.rank > 3 && (
+              <li className="tier-divider" aria-hidden="true">
+                <span>top 3</span>
+              </li>
             )}
             {prevRank !== null && prevRank <= 10 && row.rank > 10 && (
               <li className="tier-divider" aria-hidden="true">
@@ -95,14 +103,16 @@ export default function Board({
                 else itemRefs.current.delete(row.id);
               }}
             >
-              <span className="rank display" aria-label={`rank ${row.rank}`}>
-                {tier <= 2 ? (
-                  <span className="rank-badge display">#{row.rank}</span>
-                ) : (
-                  <>#{row.rank}</>
-                )}
+              <span className="rank" aria-label={`rank ${row.rank}`}>
+                {row.rank}
               </span>
-              <Favicon src={row.favicon_url} title={row.title} />
+              <LogoTile
+                faviconUrl={row.favicon_url}
+                identityKey={row.identity_key}
+                title={row.title}
+                size={TILE_SIZE[tier]}
+                lazy={row.rank > 20}
+              />
               <div className="entry">
                 <div className="entry-title">
                   <a href={`/r/${row.id}`} target="_blank" rel="nofollow noopener">
@@ -115,18 +125,11 @@ export default function Board({
                 <div className="entry-meta">
                   {timeAgo(row.updated_at)} · {categoryLabel(row.category)} ·{" "}
                   <a href={`/r/${row.id}`} target="_blank" rel="nofollow noopener">
-                    {row.clicks.toLocaleString("en-US")} ▸
+                    {row.clicks.toLocaleString("en-US")} clicks ↗
                   </a>
                 </div>
               </div>
-              <span className="amount">
-                {formatDollars(row.total_paid)}
-                {stamped.has(row.id) && (
-                  <span className="stamp-mark" aria-hidden="true">
-                    PAID
-                  </span>
-                )}
-              </span>
+              <span className="amount">{formatDollars(row.total_paid)}</span>
             </li>
           </Fragment>
         );
@@ -141,7 +144,7 @@ export default function Board({
 export function timeAgo(iso: string): string {
   const seconds = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
   if (seconds < 60) return "just now";
-  if (seconds < 3600) return `${Math.floor(seconds / 60)} min ago`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
   if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
   return `${Math.floor(seconds / 86400)}d ago`;
 }

@@ -1,16 +1,16 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { Polar } from "@polar-sh/sdk";
-import { faviconFor } from "@/lib/board";
 import { isCategory } from "@/lib/categories";
 import { normalizeIdentity } from "@/lib/identity";
+import { encodePlatform, resolveFavicon } from "@/lib/logos";
 import { containsBlockedTerm } from "@/lib/moderation";
 import { clientIp, rateLimit } from "@/lib/ratelimit";
 import { serviceClient } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
 
-const FAIL = { error: "that did not go through. no money moved. try again." };
+const FAIL = { error: "did not go through. no money moved. try again." };
 
 export async function POST(req: Request) {
   if (!rateLimit(`checkout:${clientIp(req)}`)) {
@@ -135,6 +135,13 @@ export async function POST(req: Request) {
   const site = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   const bidCents = amount_dollars * 100;
 
+  // logo resolution happens here, at submit time, server-side: known
+  // platform mark first, then a verified favicon fetch. resolving in the
+  // browser at render time is what produces grey-globe boards.
+  const logo =
+    encodePlatform(identity.identityKey) ??
+    (identity.kind === "url" ? await resolveFavicon(identity.identityKey) : null);
+
   try {
     const checkout = await polar.checkouts.create({
       products: [process.env.POLAR_PRODUCT_ID!],
@@ -149,7 +156,7 @@ export async function POST(req: Request) {
         title: cleanTitle,
         description: desc,
         category,
-        favicon_url: faviconFor(identity.identityKey) ?? "",
+        favicon_url: logo ?? "",
         bid_cents: String(bidCents),
         is_topup: String(isTopup),
         existing_total_cents: String(existing?.total_paid ?? 0),

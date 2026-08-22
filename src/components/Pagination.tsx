@@ -35,7 +35,7 @@ export default function Pagination({
           )}
           {Array.from({ length: pages }, (_, i) => i + 1).map((n) =>
             n === page ? (
-              <span key={n} className="page current" aria-current="page">
+              <span key={n} className="pg current" aria-current="page">
                 {n}
               </span>
             ) : (

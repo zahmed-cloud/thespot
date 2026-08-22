@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "rules — thespot.lol" };
 export default function Rules() {
   return (
     <div className="page column">
-      <h1 className="display">the rules</h1>
+      <h1>the rules</h1>
       <ol>
         <li>your rank is the total amount of money you have paid. nothing else. no algorithm, no votes, no reviews.</li>
         <li>a new listing costs a minimum of $5.</li>

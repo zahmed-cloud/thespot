@@ -6,10 +6,12 @@ export const metadata: Metadata = { title: "refunds — thespot.lol" };
 export default function Refunds() {
   return (
     <div className="page column">
-      <h1 className="display">refund policy</h1>
-      <p>all payments are final.</p>
+      <h1>refund policy</h1>
       <p>
-        you are buying a position on a leaderboard, and you already got it.
+        all payments are final. you bought a spot on a leaderboard and you
+        got one.
+      </p>
+      <p>
         the moment your payment clears, your listing is created or topped up
         and ranked accordingly. that is the entire product, delivered in
         full, instantly.
