@@ -109,7 +109,7 @@ export default async function RootLayout({
               target="_blank"
               rel="noopener noreferrer"
             >
-              Jam
+              @Jam
             </a>
             . no ads, no api keys, no revenue share.
           </span>
