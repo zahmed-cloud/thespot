@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { previewRank, rankBoard } from "./rank";
+import { previewRank, rankBoard, tierForRank } from "./rank";
 import type { Listing } from "./types";
 
 function row(key: string, cents: number, createdAt: string): Listing {
@@ -11,6 +11,8 @@ function row(key: string, cents: number, createdAt: string): Listing {
     description: null,
     total_paid: cents,
     clicks: 0,
+    category: "other",
+    favicon_url: null,
     created_at: createdAt,
     updated_at: createdAt,
   };
@@ -51,5 +53,13 @@ describe("previewRank", () => {
     expect(previewRank(board, 9000, board[1])).toBe(2);
     // c.com passing a.com takes #1
     expect(previewRank(board, 25000, board[2])).toBe(1);
+  });
+});
+
+describe("tierForRank", () => {
+  it("maps ranks to the four visual tiers", () => {
+    expect([1, 3, 4, 10, 11, 20, 21, 500].map(tierForRank)).toEqual([
+      1, 1, 2, 2, 3, 3, 4, 4,
+    ]);
   });
 });

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { Polar } from "@polar-sh/sdk";
+import { faviconFor } from "@/lib/board";
+import { isCategory } from "@/lib/categories";
 import { normalizeIdentity } from "@/lib/identity";
 import { containsBlockedTerm } from "@/lib/moderation";
 import { clientIp, rateLimit } from "@/lib/ratelimit";
@@ -25,18 +27,18 @@ export async function POST(req: Request) {
     return NextResponse.json(FAIL, { status: 400 });
   }
 
-  const { url, title, description, amount_dollars } = (body ?? {}) as {
+  const { url, title, description, category, amount_dollars } = (body ?? {}) as {
     url?: unknown;
     title?: unknown;
     description?: unknown;
+    category?: unknown;
     amount_dollars?: unknown;
   };
 
-  if (typeof url !== "string" || typeof title !== "string") {
+  if (typeof url !== "string") {
     return NextResponse.json(FAIL, { status: 400 });
   }
   const desc = typeof description === "string" ? description.trim() : "";
-  const cleanTitle = title.trim();
 
   const identity = normalizeIdentity(url);
   if (!identity) {
@@ -46,9 +48,25 @@ export async function POST(req: Request) {
     );
   }
 
-  if (cleanTitle.length < 1 || cleanTitle.length > 60) {
+  // title is optional: default to the domain, or the handle itself
+  const fallbackTitle =
+    identity.kind === "handle"
+      ? `@${identity.identityKey.slice(2)}`
+      : identity.identityKey.split("/")[0];
+  const cleanTitle =
+    (typeof title === "string" ? title.trim() : "") || fallbackTitle;
+
+  if (cleanTitle.length > 60) {
     return NextResponse.json(
-      { error: "title needs to be 1 to 60 characters." },
+      { error: "title maxes out at 60 characters." },
+      { status: 400 }
+    );
+  }
+
+  // category comes from the fixed list, nothing else
+  if (typeof category !== "string" || !isCategory(category)) {
+    return NextResponse.json(
+      { error: "pick a category from the list." },
       { status: 400 }
     );
   }
@@ -130,6 +148,8 @@ export async function POST(req: Request) {
         display_url: identity.displayUrl,
         title: cleanTitle,
         description: desc,
+        category,
+        favicon_url: faviconFor(identity.identityKey) ?? "",
         bid_cents: String(bidCents),
         is_topup: String(isTopup),
         existing_total_cents: String(existing?.total_paid ?? 0),

@@ -32,9 +32,20 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${bodoni.variable} ${archivo.variable} ${courier.variable}`}>
+        <header className="nav">
+          <div className="nav-inner column">
+            <Link href="/" className="nav-logo">
+              thespot.lol
+            </Link>
+            <nav className="nav-links">
+              <Link href="/rules">rules</Link>
+              <Link href="/about">about</Link>
+            </nav>
+          </div>
+        </header>
         {children}
-        <footer className="site-footer column">
-          <span>thespot.lol</span>
+        <footer className="site-footer">
+          <span>built by ahmed</span>
           <Link href="/rules">rules</Link>
           <Link href="/about">about</Link>
           <Link href="/terms">terms</Link>

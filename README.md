@@ -25,7 +25,7 @@ with no `.env.local`, the board renders 8 demo rows so you can work on the desig
 ### 1. supabase
 
 1. create a project at supabase.com
-2. sql editor → paste and run `supabase/schema.sql` (tables, indexes, RLS, realtime publication, rpc functions)
+2. sql editor → paste and run `supabase/schema.sql` (tables, indexes, RLS, realtime publication, rpc functions). if the database was created from the v1 schema, run `supabase/migration-v2.sql` instead (adds category + favicon_url)
 3. optionally run `supabase/seed.sql` for the 8 design rows
 4. copy from project settings → api:
    - `SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_URL` (same value)
@@ -50,7 +50,7 @@ with no `.env.local`, the board renders 8 demo rows so you can work on the desig
 
 ### 3. env
 
-copy `.env.example` to `.env.local` and fill it in. also add `CLICK_SALT` (any long random string; it salts the ip hashes for click dedupe).
+copy `.env.example` to `.env.local` and fill it in. also add `CLICK_SALT` (any long random string; it salts the ip hashes for click dedupe). set `NEXT_PUBLIC_LAUNCH_AT` to the launch timestamp — the footer's "in N hours" counter runs off it.
 
 ### 4. netlify
 
@@ -81,6 +81,8 @@ copy `.env.example` to `.env.local` and fill it in. also add `CLICK_SALT` (any l
 | `prefers-reduced-motion` on | no slide, no stamp |
 | `grep -rl SUPABASE_SERVICE_ROLE_KEY .next/static/` | no matches |
 | all six pages load | footer links terms, privacy, refunds |
+| `/?category=ai-tools` | filtered board with pond-local ranks, shareable url |
+| `/?page=2` | ranks 51+, server-rendered, crawlable |
 
 ## moderation: wiping a row fast
 

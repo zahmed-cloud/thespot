@@ -1,10 +1,10 @@
-import type { Listing, RankedListing } from "./types";
+import type { BoardTotal, Listing, RankedListing } from "./types";
 
 /**
  * The one sorting rule: total_paid descending, ties broken by created_at
  * ascending (the older listing keeps the higher rank).
  */
-export function sortBoard<T extends Listing>(rows: T[]): T[] {
+export function sortBoard<T extends BoardTotal>(rows: T[]): T[] {
   return [...rows].sort((a, b) => {
     if (b.total_paid !== a.total_paid) return b.total_paid - a.total_paid;
     return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
@@ -22,9 +22,9 @@ export function rankBoard(rows: Listing[]): RankedListing[] {
  * equal totals that are older than it.
  */
 export function previewRank(
-  rows: Listing[],
+  rows: BoardTotal[],
   prospectiveTotalCents: number,
-  existing: Listing | null
+  existing: BoardTotal | null
 ): number {
   let above = 0;
   for (const row of rows) {
@@ -38,6 +38,14 @@ export function previewRank(
     }
   }
   return above + 1;
+}
+
+/** Visual tier for a rank: drives row size, tint, border, and padding. */
+export function tierForRank(rank: number): 1 | 2 | 3 | 4 {
+  if (rank <= 3) return 1;
+  if (rank <= 10) return 2;
+  if (rank <= 20) return 3;
+  return 4;
 }
 
 export function formatDollars(cents: number): string {

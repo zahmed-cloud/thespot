@@ -13,11 +13,14 @@ create table listings (
   description    text,
   total_paid     integer     not null default 0,  -- CENTS. this is the rank.
   clicks         integer     not null default 0,
+  category       text        not null default 'other',
+  favicon_url    text,
   created_at     timestamptz not null default now(),
   updated_at     timestamptz not null default now()
 );
 
 create index listings_rank_idx on listings (total_paid desc, created_at asc);
+create index listings_category_rank_idx on listings (category, total_paid desc, created_at asc);
 
 create table payments (
   id              uuid primary key default gen_random_uuid(),
@@ -75,6 +78,8 @@ create or replace function handle_order_paid(
   p_title        text,
   p_description  text,
   p_amount_cents integer,
+  p_category     text,
+  p_favicon_url  text,
   p_raw          jsonb
 ) returns void
 language plpgsql
@@ -90,12 +95,15 @@ begin
     return;  -- already credited, webhook retry
   end if;
 
-  insert into listings (identity_key, display_url, title, description, total_paid)
-  values (p_identity_key, p_display_url, p_title, p_description, p_amount_cents)
+  insert into listings (identity_key, display_url, title, description, total_paid, category, favicon_url)
+  values (p_identity_key, p_display_url, p_title, p_description, p_amount_cents,
+          coalesce(nullif(p_category, ''), 'other'), p_favicon_url)
   on conflict (identity_key) do update set
     total_paid  = listings.total_paid + excluded.total_paid,
     title       = coalesce(nullif(excluded.title, ''), listings.title),
     description = coalesce(nullif(excluded.description, ''), listings.description),
+    category    = coalesce(nullif(excluded.category, ''), listings.category),
+    favicon_url = coalesce(excluded.favicon_url, listings.favicon_url),
     updated_at  = now();
 end;
 $$;
@@ -161,6 +169,6 @@ begin
 end;
 $$;
 
-revoke execute on function handle_order_paid(text, text, text, text, text, integer, jsonb) from public, anon, authenticated;
+revoke execute on function handle_order_paid(text, text, text, text, text, integer, text, text, jsonb) from public, anon, authenticated;
 revoke execute on function handle_order_refunded(text, integer, jsonb) from public, anon, authenticated;
 revoke execute on function record_click(uuid, text) from public, anon, authenticated;

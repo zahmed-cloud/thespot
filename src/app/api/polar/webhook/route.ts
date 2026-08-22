@@ -3,6 +3,7 @@ import {
   validateEvent,
   WebhookVerificationError,
 } from "@polar-sh/sdk/webhooks";
+import { isCategory } from "@/lib/categories";
 import { serviceClient } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
@@ -41,6 +42,9 @@ export async function POST(req: Request) {
     const displayUrl = str(meta.display_url);
     const title = str(meta.title);
     const description = str(meta.description);
+    const rawCategory = str(meta.category);
+    const category = isCategory(rawCategory) ? rawCategory : "other";
+    const faviconUrl = str(meta.favicon_url) || null;
 
     // the real paid amount comes from the order, never from metadata.
     // netAmount is what the buyer chose to pay, before polar's
@@ -72,6 +76,8 @@ export async function POST(req: Request) {
       p_title: title,
       p_description: description,
       p_amount_cents: amountCents,
+      p_category: category,
+      p_favicon_url: faviconUrl,
       p_raw: JSON.parse(raw),
     });
 
