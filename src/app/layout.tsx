@@ -23,7 +23,6 @@ export const metadata: Metadata = {
   title: "thespot.lol — rank is the money",
   description:
     "a public leaderboard where your rank is decided by one thing: how much you have paid. $5 gets you on.",
-  alternates: { canonical: "/" },
   openGraph: {
     title: "thespot.lol — rank is the money",
     description:
@@ -56,6 +55,26 @@ export const viewport = {
   ],
 };
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      name: "thespot.lol",
+      url: SITE,
+      description:
+        "a public leaderboard where rank is decided by one thing: how much you paid.",
+    },
+    {
+      "@type": "Organization",
+      name: "thespot.lol",
+      url: SITE,
+      logo: `${SITE}/icon-32.png`,
+      sameAs: ["https://www.linkedin.com/in/getascent/"],
+    },
+  ],
+};
+
 // runs before first paint so dark-mode users never see a white flash
 const themeScript = `(function(){try{var m=document.cookie.match(/(?:^|; )theme=(dark|light)/);var t=m?m[1]:(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.dataset.theme=t;}catch(e){}})()`;
 
@@ -74,6 +93,10 @@ export default async function RootLayout({
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
       </head>
       <body>
         <Nav />
@@ -90,6 +113,8 @@ export default async function RootLayout({
             </a>
             . no ads, no api keys, no revenue share.
           </span>
+          <Link href="/rules">rules</Link>
+          <Link href="/about">about</Link>
           <Link href="/terms">terms</Link>
           <Link href="/privacy">privacy</Link>
           <Link href="/refunds">refunds</Link>

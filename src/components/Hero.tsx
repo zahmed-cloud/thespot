@@ -224,7 +224,7 @@ export default function Hero({
     <section className="hero" id="bid">
       <div className="hero-card">
         <form onSubmit={submit}>
-          <p className="hero-label">the top spot costs</p>
+          <h1 className="hero-label">the top spot costs</h1>
           <div className="hero-price-row">
             <button
               type="button"
@@ -314,8 +314,14 @@ export default function Hero({
             </div>
           )}
 
-          <p className="hero-note">{preview}</p>
-          {error && <p className="hero-error">{error}</p>}
+          <p className="hero-note" role="status" aria-live="polite">
+            {preview}
+          </p>
+          {error && (
+            <p className="hero-error" role="alert">
+              {error}
+            </p>
+          )}
         </form>
       </div>
     </section>

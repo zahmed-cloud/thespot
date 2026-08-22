@@ -23,9 +23,15 @@ export default async function About() {
       </p>
       <p>launched august 2026.</p>
       <h2>the board right now</h2>
-      <p className="stat-line">{stats.total_listings} listings on the board</p>
-      <p className="stat-line">{formatDollars(stats.total_raised_cents)} paid in total</p>
-      <p className="stat-line">{formatDollars(stats.top_bid_cents)} holds the top spot</p>
+      {stats.total_listings > 0 ? (
+        <>
+          <p className="stat-line">{stats.total_listings} listings on the board</p>
+          <p className="stat-line">{formatDollars(stats.total_raised_cents)} paid in total</p>
+          <p className="stat-line">{formatDollars(stats.top_bid_cents)} holds the top spot</p>
+        </>
+      ) : (
+        <p className="stat-line">the top spot is unclaimed. $5 takes it.</p>
+      )}
       <p>
         <Link href="/">back to the board</Link>
       </p>

@@ -12,6 +12,17 @@ export const dynamic = "force-dynamic";
  * returns the credited listing and its live rank.
  */
 export async function GET(req: Request) {
+  try {
+    return await handle(req);
+  } catch (err) {
+    // a transient db hiccup must read as "still pending" to the buyer
+    // sitting on /success, never as an error — they will poll again
+    console.error("listing-status failed, returning pending", err);
+    return NextResponse.json({ status: "pending" });
+  }
+}
+
+async function handle(req: Request) {
   const params = new URL(req.url).searchParams;
   const checkoutId = params.get("checkout_id") ?? "";
   const clientRef = params.get("ref") ?? "";

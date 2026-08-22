@@ -39,16 +39,16 @@ export default function CategoryBar({ active }: { active: string | null }) {
 
   return (
     <div className="cat-wrap" id="categories">
-      <div className="cat-bar" ref={barRef} role="tablist" aria-label="categories">
+      <div className="cat-bar" ref={barRef} role="group" aria-label="categories">
         <span className="cat-pill" ref={pillRef} aria-hidden="true" />
         {items.map((c) => (
           <button
             key={c.slug ?? "all"}
             type="button"
-            role="tab"
             data-cat={c.slug ?? "all"}
             className="cat"
             aria-selected={selected === c.slug}
+            aria-pressed={selected === c.slug}
             onClick={() => pick(c.slug)}
           >
             {c.label}

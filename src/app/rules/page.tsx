@@ -15,7 +15,7 @@ export default function Rules() {
         <li>ties go to whoever got there first. the older listing keeps the higher rank.</li>
         <li>paying less than #1 still puts you on the board, at whatever rank that amount buys.</li>
         <li>entering the same url or @handle again tops up your existing listing. it never creates a second row.</li>
-        <li>climbing costs only the difference. if you are at $4 and #1 sits at $10, taking #1 costs $7, not $11.</li>
+        <li>climbing costs only the difference. if you are at $5 and #1 sits at $10, taking #1 costs $6, not $11.</li>
         <li>listings never expire and are never removed.</li>
         <li>all payments are final and non-refundable. see <Link href="/refunds">refunds</Link>.</li>
         <li>every row shows a live count of outbound clicks.</li>

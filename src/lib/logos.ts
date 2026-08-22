@@ -102,10 +102,18 @@ export function logoRefFor(
  */
 export async function resolveFavicon(identityKey: string): Promise<string | null> {
   const domain = identityKey.split("/")[0];
+  // ip-literal hosts are rejected outright: no reason a real product
+  // lives at a bare ip, and it closes the internal-address ssrf door
+  if (/^\d+\.\d+\.\d+\.\d+$/.test(domain) || domain.includes(":")) {
+    console.warn(`favicon: refusing ip-literal host ${domain}`);
+    return null;
+  }
+  // only third-party icon proxies — never fetch the submitter's own
+  // server, and never store a url the submitter controls (they could
+  // pass the check once, then serve anything to every visitor forever)
   const candidates = [
     `https://icons.duckduckgo.com/ip3/${domain}.ico`,
     `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`,
-    `https://${domain}/favicon.ico`,
   ];
   for (const url of candidates) {
     try {

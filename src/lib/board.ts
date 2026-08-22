@@ -109,14 +109,22 @@ async function fetchAll(): Promise<Listing[]> {
   const db = serviceClient();
   if (!db) return DEMO_ROWS;
 
-  const { data, error } = await db
-    .from("listings")
-    .select("*")
-    .order("total_paid", { ascending: false })
-    .order("created_at", { ascending: true });
-
-  if (error) throw new Error(`board query failed: ${error.message}`);
-  return (data ?? []) as Listing[];
+  // supabase caps a select at 1000 rows by default; page through so a
+  // busy board never silently truncates
+  const all: Listing[] = [];
+  const CHUNK = 1000;
+  for (let from = 0; ; from += CHUNK) {
+    const { data, error } = await db
+      .from("listings")
+      .select("*")
+      .order("total_paid", { ascending: false })
+      .order("created_at", { ascending: true })
+      .range(from, from + CHUNK - 1);
+    if (error) throw new Error(`board query failed: ${error.message}`);
+    all.push(...((data ?? []) as Listing[]));
+    if (!data || data.length < CHUNK) break;
+  }
+  return all;
 }
 
 export async function getBoard(): Promise<RankedListing[]> {

@@ -19,7 +19,8 @@
   /* text */
   --text:          #0B0D12;
   --text-2:        #4A5060;
-  --text-3:        #868D9C;
+  /* brief said #868D9C, but that is 3.3:1 on white — fails AA at 12px */
+  --text-3:        #687080;
 
   /* hairlines, used sparingly */
   --line:          rgba(16, 24, 40, 0.07);
@@ -88,7 +89,7 @@
 
   --text:          #F3F5F8;
   --text-2:        #A6AEBC;
-  --text-3:        #6C7484;
+  --text-3:        #8C95A8;
 
   --line:          rgba(255, 255, 255, 0.07);
   --line-strong:   rgba(255, 255, 255, 0.13);

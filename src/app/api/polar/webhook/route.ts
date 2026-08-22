@@ -58,7 +58,8 @@ export async function POST(req: Request) {
     const minCents = isTopup ? 100 : 500;
 
     if (!identityKey || !displayUrl || !title) {
-      console.error("order.paid missing metadata", order.id, meta);
+      // log the FULL payload so a skipped order can be reconciled by hand
+      console.error("order.paid missing metadata", order.id, raw);
       // 200: retrying will never fix missing metadata
       return NextResponse.json({ received: true, skipped: "bad metadata" });
     }
@@ -67,7 +68,7 @@ export async function POST(req: Request) {
       amountCents < minCents ||
       amountCents % 100 !== 0
     ) {
-      console.error("order.paid invalid amount", order.id, amountCents);
+      console.error("order.paid invalid amount", order.id, amountCents, raw);
       return NextResponse.json({ received: true, skipped: "bad amount" });
     }
 

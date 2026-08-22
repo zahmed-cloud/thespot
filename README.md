@@ -150,6 +150,10 @@ where identity_key = 'the-offending-key';
 the profanity filter in `src/lib/moderation.ts` blocks the obvious stuff
 at submit. this query is for everything it misses.
 
+blank, do not `delete`: deleting a row while someone has a $1 top-up
+checkout open lets that checkout re-create the listing under the $5
+floor when it pays out. blanking keeps the row and the rules intact.
+
 ## how money flows
 
 1. `/api/checkout` validates input ($5 minimum new, $1 top-up, fixed category list, profanity filter, 5/min/ip rate limit), resolves the logo server-side, creates a polar checkout with identity metadata

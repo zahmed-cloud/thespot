@@ -27,10 +27,15 @@ create table payments (
   polar_order_id  text        not null unique,
   identity_key    text        not null,
   amount_cents    integer     not null,
-  status          text        not null,   -- 'paid' | 'refunded'
+  refunded_cents  integer     not null default 0,
+  status          text        not null,   -- 'paid' | 'partially_refunded' | 'refunded'
   raw_payload     jsonb,
   created_at      timestamptz not null default now()
 );
+
+-- /success polls by the order's checkout id and our client_ref
+create index payments_checkout_id_idx on payments ((raw_payload->'data'->>'checkout_id'));
+create index payments_client_ref_idx on payments ((raw_payload->'data'->'metadata'->>'client_ref'));
 
 create table click_events (
   id          uuid primary key default gen_random_uuid(),
@@ -120,18 +125,35 @@ as $$
 declare
   v_key  text;
   v_paid integer;
+  v_old  integer;
+  v_new  integer;
 begin
-  update payments
-  set status = 'refunded', raw_payload = p_raw
-  where polar_order_id = p_order_id and status <> 'refunded'
-  returning identity_key, amount_cents into v_key, v_paid;
+  -- polar sends the CUMULATIVE refunded amount, so partial refunds
+  -- arrive as a growing total. lock the row, compute the fresh delta,
+  -- and subtract only that.
+  select identity_key, amount_cents, refunded_cents
+  into v_key, v_paid, v_old
+  from payments
+  where polar_order_id = p_order_id
+  for update;
 
   if v_key is null then
-    return;  -- unknown order or already refunded
+    return;  -- unknown order
   end if;
 
+  v_new := least(v_paid, greatest(v_old, p_refunded_cents));
+  if v_new <= v_old then
+    return;  -- replayed or out-of-order event, nothing new to refund
+  end if;
+
+  update payments
+  set refunded_cents = v_new,
+      status = case when v_new >= v_paid then 'refunded' else 'partially_refunded' end,
+      raw_payload = p_raw
+  where polar_order_id = p_order_id;
+
   update listings
-  set total_paid = greatest(0, total_paid - least(p_refunded_cents, v_paid)),
+  set total_paid = greatest(0, total_paid - (v_new - v_old)),
       updated_at = now()
   where identity_key = v_key;
 end;
@@ -154,6 +176,10 @@ begin
   if v_url is null then
     return null;
   end if;
+
+  -- serialise per (listing, ip) so concurrent hits cannot both pass
+  -- the dedupe check and double-count
+  perform pg_advisory_xact_lock(hashtext(p_listing_id::text || p_ip_hash));
 
   if not exists (
     select 1 from click_events

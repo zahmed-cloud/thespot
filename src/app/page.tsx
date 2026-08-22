@@ -6,22 +6,42 @@ import { categoryLabel, isCategory } from "@/lib/categories";
 
 export const dynamic = "force-dynamic";
 
-// filtered views are individually indexable: "ai tools on thespot.lol"
+const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://thespot.lol";
+
+// filtered views are individually indexable: "ai tools on thespot.lol".
+// canonicals must be absolute strings — next drops the query string when
+// resolving relative urls against metadataBase.
 export async function generateMetadata({
   searchParams,
 }: {
   searchParams: Promise<{ category?: string }>;
 }): Promise<Metadata> {
   const params = await searchParams;
-  if (!params.category || !isCategory(params.category)) return {};
+  if (!params.category || !isCategory(params.category)) {
+    return { alternates: { canonical: SITE } };
+  }
   const label = categoryLabel(params.category);
+  const url = `${SITE}/?category=${params.category}`;
+  const title = `${label} on thespot.lol`;
+  const description = `the ${label} leaderboard where rank is decided by how much you have paid. $5 gets you on.`;
   return {
-    title: `${label} on thespot.lol`,
-    description: `the ${label} leaderboard where rank is decided by how much you have paid. $5 gets you on.`,
-    alternates: { canonical: `/?category=${params.category}` },
+    title,
+    description,
+    alternates: { canonical: url },
     openGraph: {
-      title: `${label} on thespot.lol`,
-      url: `/?category=${params.category}`,
+      title,
+      description,
+      url,
+      siteName: "thespot.lol",
+      type: "website",
+      images: [{ url: `${SITE}/api/og`, width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      site: "@getascent",
+      title,
+      description,
+      images: [`${SITE}/api/og`],
     },
   };
 }

@@ -20,7 +20,17 @@ export function rateLimit(key: string, limit = 5, windowMs = 60_000): boolean {
 }
 
 export function clientIp(req: Request): string {
+  // prefer headers the platform itself sets and callers cannot spoof;
+  // fall back to the LAST forwarded entry (appended by the trusted
+  // proxy), never the attacker-writable first one
+  const vercel = req.headers.get("x-vercel-forwarded-for");
+  if (vercel) return vercel.split(",")[0].trim();
+  const real = req.headers.get("x-real-ip");
+  if (real) return real.trim();
   const fwd = req.headers.get("x-forwarded-for");
-  if (fwd) return fwd.split(",")[0].trim();
-  return req.headers.get("x-real-ip") ?? "unknown";
+  if (fwd) {
+    const parts = fwd.split(",");
+    return parts[parts.length - 1].trim();
+  }
+  return "unknown";
 }
