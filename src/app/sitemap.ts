@@ -8,7 +8,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: `${SITE}/`, changeFrequency: "hourly", priority: 1, lastModified: now },
     ...CATEGORIES.map((c) => ({
-      url: `${SITE}/?category=${c.slug}`,
+      url: `${SITE}/c/${c.slug}`,
       changeFrequency: "hourly" as const,
       priority: 0.7,
       lastModified: now,

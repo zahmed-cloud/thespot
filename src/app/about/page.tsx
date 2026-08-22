@@ -3,7 +3,11 @@ import Link from "next/link";
 import { getStats } from "@/lib/board";
 import { formatDollars } from "@/lib/rank";
 
-export const metadata: Metadata = { title: "about — thespot.lol" };
+export const metadata: Metadata = {
+  title: "about — thespot.lol",
+  description: "what thespot.lol is: a public leaderboard where anyone can pay to rank a website or handle. no algorithm, just money.",
+  alternates: { canonical: "/about" },
+};
 export const dynamic = "force-dynamic";
 
 export default async function About() {

@@ -32,7 +32,7 @@ export default function CategoryBar({ active }: { active: string | null }) {
 
   function pick(slug: string | null) {
     setSelected(slug);
-    router.push(slug ? `/?category=${slug}` : "/", { scroll: false });
+    router.push(slug ? `/c/${slug}` : "/", { scroll: false });
   }
 
   const items = [{ slug: null as string | null, label: "all" }, ...CATEGORIES];

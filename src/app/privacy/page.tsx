@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata: Metadata = { title: "privacy — thespot.lol" };
+export const metadata: Metadata = {
+  title: "privacy — thespot.lol",
+  description: "privacy policy for thespot.lol: what is collected, what polar handles, one theme cookie, no trackers.",
+  alternates: { canonical: "/privacy" },
+};
 
 export default function Privacy() {
   return (

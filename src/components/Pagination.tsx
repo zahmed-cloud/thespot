@@ -1,11 +1,9 @@
 import Link from "next/link";
 
 function pageHref(page: number, category: string | null): string {
-  const params = new URLSearchParams();
-  if (category) params.set("category", category);
-  if (page > 1) params.set("page", String(page));
-  const q = params.toString();
-  return q ? `/?${q}` : "/";
+  const base = category ? `/c/${category}` : "/";
+  if (page > 1) return `${base}?page=${page}`;
+  return base;
 }
 
 /** Server-rendered numbered pagination so page 2 is crawlable. */

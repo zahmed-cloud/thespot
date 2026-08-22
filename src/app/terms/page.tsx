@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata: Metadata = { title: "terms — thespot.lol" };
+export const metadata: Metadata = {
+  title: "terms — thespot.lol",
+  description: "terms of service for thespot.lol: what a payment buys, listing rules, and liability.",
+  alternates: { canonical: "/terms" },
+};
 
 export default function Terms() {
   return (

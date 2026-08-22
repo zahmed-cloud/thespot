@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata: Metadata = { title: "rules — thespot.lol" };
+export const metadata: Metadata = {
+  title: "rules — thespot.lol",
+  description: "the eleven rules of thespot.lol: rank is the total paid, $5 minimum, ties go to the older listing, all payments final.",
+  alternates: { canonical: "/rules" },
+};
 
 export default function Rules() {
   return (

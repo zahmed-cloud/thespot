@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata: Metadata = { title: "refunds — thespot.lol" };
+export const metadata: Metadata = {
+  title: "refunds — thespot.lol",
+  description: "refund policy for thespot.lol: all payments are final. you bought a spot on a leaderboard and you got one.",
+  alternates: { canonical: "/refunds" },
+};
 
 export default function Refunds() {
   return (
