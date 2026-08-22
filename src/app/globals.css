@@ -1022,10 +1022,23 @@ button {
 }
 
 .empty-state {
-  padding: 64px 0;
+  padding: 72px 0 88px;
   text-align: center;
-  font-size: 14px;
-  color: var(--text-3);
+}
+
+.empty-big {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text);
+}
+
+.empty-sub {
+  margin-top: 10px;
+  font-size: 15px;
+  color: var(--text-2);
+  max-width: 460px;
+  margin-inline: auto;
 }
 
 /* ---------- tier dividers ---------- */

@@ -59,11 +59,24 @@ export default function Board({
 
   if (rows.length === 0) {
     return (
-      <p className="empty-state">
-        {categoryLabelText
-          ? `nothing in ${categoryLabelText} yet. $5 makes you #1 in here.`
-          : "nobody has paid yet. five dollars owns the whole thing right now."}
-      </p>
+      <div className="empty-state">
+        {categoryLabelText ? (
+          <>
+            <p className="empty-big">{categoryLabelText} has no king yet.</p>
+            <p className="empty-sub">
+              five dollars takes #1 in {categoryLabelText} right now. whole category, one bill.
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="empty-big">the entire board is up for grabs.</p>
+            <p className="empty-sub">
+              nobody has paid a cent. five dollars makes you the first #1 in
+              thespot.lol history. it will never be this cheap again.
+            </p>
+          </>
+        )}
+      </div>
     );
   }
 
