@@ -18,7 +18,8 @@ export default function FooterTotal({ totalCents }: { totalCents: number }) {
 
   return (
     <section className="total-band">
-      <p className="kicker">this stupid little board has taken</p>
+      {/* flat setup, then a very large number. the restraint is the flex. */}
+      <p className="kicker">people have paid</p>
       <p className="big">
         <DigitRoll text={text} />
       </p>

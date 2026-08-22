@@ -113,16 +113,27 @@ export async function resolveFavicon(identityKey: string): Promise<string | null
         signal: AbortSignal.timeout(3000),
         redirect: "follow",
       });
-      if (!res.ok) continue;
+      if (!res.ok) {
+        console.warn(`favicon: ${url} returned ${res.status}`);
+        continue;
+      }
       const type = res.headers.get("content-type") ?? "";
-      if (!type.startsWith("image/")) continue;
+      if (!type.startsWith("image/")) {
+        console.warn(`favicon: ${url} is ${type || "typeless"}, not an image`);
+        continue;
+      }
       const bytes = (await res.arrayBuffer()).byteLength;
       // a real icon is bigger than a 16x16 placeholder stub
-      if (bytes < 150) continue;
+      if (bytes < 150) {
+        console.warn(`favicon: ${url} is a ${bytes}-byte stub, skipping`);
+        continue;
+      }
       return url;
-    } catch {
+    } catch (err) {
+      console.warn(`favicon: ${url} fetch failed`, err);
       continue;
     }
   }
+  console.warn(`favicon: no usable icon for ${domain}, falling back to tile`);
   return null;
 }

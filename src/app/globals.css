@@ -34,13 +34,21 @@
   /* money is not coloured. it is the boldest black on the page. */
   --money:         #0B0D12;
 
-  /* rank tiers */
-  --gold:          #B8860B;
-  --gold-wash:     linear-gradient(180deg, rgba(255,215,130,0.16), rgba(255,215,130,0.04));
-  --silver:        #7E8794;
-  --silver-wash:   linear-gradient(180deg, rgba(160,172,190,0.14), rgba(160,172,190,0.03));
-  --bronze:        #A2704A;
-  --bronze-wash:   linear-gradient(180deg, rgba(205,140,90,0.14), rgba(205,140,90,0.03));
+  /* rank tiers — soft apple system gradients, not metals */
+  /* rank 1 — blue (violet fallback if it fights the accent: #7B7CE8 → #6366D6) */
+  --t1-grad:  linear-gradient(160deg, #5E9BEC 0%, #4478D6 100%);
+  --t1-wash:  linear-gradient(160deg, rgba(94,155,236,0.10) 0%, rgba(68,120,214,0.04) 100%);
+  --t1-ring:  rgba(68, 120, 214, 0.18);
+
+  /* rank 2 — pink */
+  --t2-grad:  linear-gradient(160deg, #EE7F9A 0%, #DD5F80 100%);
+  --t2-wash:  linear-gradient(160deg, rgba(238,127,154,0.10) 0%, rgba(221,95,128,0.04) 100%);
+  --t2-ring:  rgba(221, 95, 128, 0.18);
+
+  /* rank 3 — orange */
+  --t3-grad:  linear-gradient(160deg, #F5B072 0%, #ED9450 100%);
+  --t3-wash:  linear-gradient(160deg, rgba(245,176,114,0.11) 0%, rgba(237,148,80,0.04) 100%);
+  --t3-ring:  rgba(237, 148, 80, 0.20);
 
   /* shadows */
   --shadow-sm:     0 1px 2px rgba(16,24,40,0.04);
@@ -88,12 +96,12 @@
 
   --money:         #FFFFFF;
 
-  --gold:          #E8B84B;
-  --gold-wash:     linear-gradient(180deg, rgba(232,184,75,0.13), rgba(232,184,75,0.03));
-  --silver:        #AEB8C6;
-  --silver-wash:   linear-gradient(180deg, rgba(174,184,198,0.11), rgba(174,184,198,0.02));
-  --bronze:        #C98B5E;
-  --bronze-wash:   linear-gradient(180deg, rgba(201,139,94,0.12), rgba(201,139,94,0.02));
+  --t1-wash: linear-gradient(160deg, rgba(94,155,236,0.14) 0%, rgba(68,120,214,0.03) 100%);
+  --t1-ring: rgba(94, 155, 236, 0.24);
+  --t2-wash: linear-gradient(160deg, rgba(238,127,154,0.13) 0%, rgba(221,95,128,0.03) 100%);
+  --t2-ring: rgba(238, 127, 154, 0.24);
+  --t3-wash: linear-gradient(160deg, rgba(245,176,114,0.13) 0%, rgba(237,148,80,0.03) 100%);
+  --t3-ring: rgba(245, 176, 114, 0.24);
 
   --shadow-sm:     0 1px 2px rgba(0,0,0,0.4);
   --shadow-md:     0 2px 4px rgba(0,0,0,0.35), 0 8px 20px rgba(0,0,0,0.4);
@@ -380,6 +388,8 @@ button {
 }
 
 .hero-price {
+  display: inline-flex;
+  align-items: baseline;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   font-size: 72px;
@@ -388,6 +398,43 @@ button {
   line-height: 1;
   color: var(--money);
   white-space: nowrap;
+  border-radius: var(--r-md);
+}
+
+/* the number is a real input styled as display text. the caret is the
+   affordance; no focus ring. */
+.hero-price input {
+  font: inherit;
+  letter-spacing: inherit;
+  font-variant-numeric: tabular-nums;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--money);
+  text-align: left;
+  padding: 0;
+  min-width: 1ch;
+  caret-color: var(--accent);
+}
+
+.hero-price input:focus-visible {
+  outline: none;
+}
+
+/* one-time first-visit affordance: a single 600ms pulse, then never again */
+.hero-price.first-pulse {
+  animation: price-pulse 600ms var(--ease) 1;
+}
+
+@keyframes price-pulse {
+  0% { box-shadow: 0 0 0 0 transparent; }
+  45% { box-shadow: 0 0 0 14px var(--accent-wash); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+/* external updates roll; keystrokes swap instantly */
+.hero-price.ext-roll input {
+  animation: roll-in 260ms var(--ease);
 }
 
 .hero-sub {
@@ -596,8 +643,8 @@ button {
   gap: 2px;
   overflow-x: auto;
   scrollbar-width: none;
-  mask-image: linear-gradient(90deg, transparent, #000 20px, #000 calc(100% - 20px), transparent);
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 20px, #000 calc(100% - 20px), transparent);
+  mask-image: linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
 }
 
 .cat-bar::-webkit-scrollbar {
@@ -708,24 +755,24 @@ button {
 /* tiers */
 
 .row.r1 {
-  background: var(--gold-wash), var(--surface);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gold) 22%, transparent), var(--shadow-md);
+  background: var(--t1-wash), var(--surface);
+  box-shadow: inset 0 0 0 1px var(--t1-ring), var(--shadow-md);
   --title-size: 22px;
   --money-size: 26px;
   padding: 18px 22px;
 }
 
 .row.r2 {
-  background: var(--silver-wash), var(--surface);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--silver) 18%, transparent), var(--shadow-sm);
+  background: var(--t2-wash), var(--surface);
+  box-shadow: inset 0 0 0 1px var(--t2-ring), var(--shadow-sm);
   --title-size: 20px;
   --money-size: 24px;
   padding: 16px 22px;
 }
 
 .row.r3 {
-  background: var(--bronze-wash), var(--surface);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bronze) 18%, transparent), var(--shadow-sm);
+  background: var(--t3-wash), var(--surface);
+  box-shadow: inset 0 0 0 1px var(--t3-ring), var(--shadow-sm);
   --title-size: 20px;
   --money-size: 24px;
   padding: 16px 22px;
@@ -766,9 +813,43 @@ button {
   color: var(--text-3);
 }
 
-.row.r1 .rank { background: var(--gold); color: #fff; }
-.row.r2 .rank { background: var(--silver); color: #fff; }
-.row.r3 .rank { background: var(--bronze); color: #fff; }
+/* top three: the full gradient, glass highlight, coloured lift.
+   the inset white line along the top edge is what makes it read as
+   glass instead of a flat swatch. */
+.row.r1 .rank,
+.row.r2 .rank,
+.row.r3 .rank {
+  color: #fff;
+  font-weight: 700;
+  border-radius: 10px;
+}
+
+.row.r1 .rank {
+  background: var(--t1-grad);
+  box-shadow: 0 2px 6px rgba(68, 120, 214, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.row.r2 .rank {
+  background: var(--t2-grad);
+  box-shadow: 0 2px 6px rgba(221, 95, 128, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.row.r3 .rank {
+  background: var(--t3-grad);
+  box-shadow: 0 2px 6px rgba(237, 148, 80, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+/* the colour stops after three. that is what makes the top three
+   feel like the top three. */
+.row.t2 .rank,
+.row.t3 .rank,
+.row.t4 .rank {
+  background: var(--surface-sunk);
+  color: var(--text-2);
+}
 
 /* logo tile */
 
@@ -971,6 +1052,8 @@ button {
   gap: 8px;
   overflow-x: auto;
   scrollbar-width: none;
+  mask-image: linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
 }
 
 .activity-cards::-webkit-scrollbar {

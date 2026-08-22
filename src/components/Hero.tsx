@@ -1,15 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { CATEGORIES } from "@/lib/categories";
 import { normalizeIdentity } from "@/lib/identity";
 import { formatDollars, previewRank } from "@/lib/rank";
 import type { BoardTotal } from "@/lib/types";
-import DigitRoll from "./DigitRoll";
+
+const MAX_DIGITS = 7;
 
 /**
- * The hero card. The number is the hero: the live price of #1 plus a
- * dollar, steppable, with rolling digits. The bid form sits under it.
+ * The hero card. The price is a real text input styled as display text:
+ * click it, type any number, commas land live, the caret stays put.
+ * Steppers write into the same state. The digit-roll animation is for
+ * values arriving from the realtime channel, never for keystrokes.
  */
 export default function Hero({
   totals,
@@ -18,7 +21,10 @@ export default function Hero({
   totals: BoardTotal[];
   topTotalCents: number;
 }) {
-  const [bid, setBid] = useState(Math.max(5, Math.floor(topTotalCents / 100) + 1));
+  // raw digits only; the input shows the comma-formatted version
+  const [raw, setRaw] = useState(() =>
+    String(Math.max(5, Math.floor(topTotalCents / 100) + 1))
+  );
   const [bidTouched, setBidTouched] = useState(false);
   const [url, setUrl] = useState("");
   const [title, setTitle] = useState("");
@@ -26,11 +32,45 @@ export default function Hero({
   const [category, setCategory] = useState("other");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [extRoll, setExtRoll] = useState(false);
+  const [firstPulse, setFirstPulse] = useState(false);
 
-  // follow the live top price until the visitor takes the stepper over
+  const inputRef = useRef<HTMLInputElement>(null);
+  const pendingCaret = useRef<number | null>(null);
+
+  const bid = parseInt(raw || "0", 10);
+  const formatted = bid > 0 ? bid.toLocaleString("en-US") : raw;
+
+  // follow the live top price until the visitor takes the number over.
+  // external arrivals roll; keystrokes never do.
   useEffect(() => {
-    if (!bidTouched) setBid(Math.max(5, Math.floor(topTotalCents / 100) + 1));
+    if (bidTouched) return;
+    const next = String(Math.max(5, Math.floor(topTotalCents / 100) + 1));
+    setRaw((prev) => {
+      if (prev === next) return prev;
+      setExtRoll(true);
+      setTimeout(() => setExtRoll(false), 300);
+      return next;
+    });
   }, [topTotalCents, bidTouched]);
+
+  // one-time first-visit affordance: a single pulse, then never again
+  useEffect(() => {
+    if (localStorage.getItem("spot-priced")) return;
+    localStorage.setItem("spot-priced", "1");
+    setFirstPulse(true);
+    const t = setTimeout(() => setFirstPulse(false), 700);
+    return () => clearTimeout(t);
+  }, []);
+
+  // restore the caret after a formatting re-render
+  useLayoutEffect(() => {
+    const el = inputRef.current;
+    if (el && pendingCaret.current !== null) {
+      el.setSelectionRange(pendingCaret.current, pendingCaret.current);
+      pendingCaret.current = null;
+    }
+  }, [formatted]);
 
   const identity = useMemo(() => normalizeIdentity(url), [url]);
   const existing = useMemo(
@@ -42,24 +82,68 @@ export default function Hero({
   );
   const minimum = existing ? 1 : 5;
 
+  const costToTopDollars = useMemo(() => {
+    if (!existing) return null;
+    const top = totals.reduce(
+      (best, r) =>
+        r.total_paid > best.total_paid ||
+        (r.total_paid === best.total_paid &&
+          new Date(r.created_at) < new Date(best.created_at))
+          ? r
+          : best,
+      totals[0]
+    );
+    if (top.identity_key === existing.identity_key) return 0;
+    const older = new Date(existing.created_at) < new Date(top.created_at);
+    return (top.total_paid - existing.total_paid) / 100 + (older ? 0 : 1);
+  }, [existing, totals]);
+
   const preview = useMemo(() => {
     if (url.trim() && !identity) return "that does not look like a url or handle.";
     const prospective = (existing?.total_paid ?? 0) + bid * 100;
     const rank = previewRank(totals, prospective, existing);
-    const landing =
-      rank === 1
-        ? "this takes #1. someone will take it back."
-        : `this puts you at #${rank}.`;
     if (existing) {
-      const existingRank = previewRank(totals, existing.total_paid, existing);
-      return `you are at ${formatDollars(existing.total_paid)} (#${existingRank}). ${landing}`;
+      if (costToTopDollars === 0) {
+        return `you are #1 at ${formatDollars(existing.total_paid)}. paying more builds the moat.`;
+      }
+      if (rank === 1) return "this takes #1. someone will take it back.";
+      return `you are at ${formatDollars(existing.total_paid)}. taking #1 costs ${formatDollars((costToTopDollars ?? 0) * 100)}.`;
     }
-    return landing;
-  }, [url, identity, existing, bid, totals]);
+    return rank === 1
+      ? "this takes #1. someone will take it back."
+      : `this puts you at #${rank}.`;
+  }, [url, identity, existing, bid, totals, costToTopDollars]);
 
-  function step(delta: number) {
+  function writeBid(next: number) {
     setBidTouched(true);
-    setBid((b) => Math.max(minimum, b + delta));
+    setRaw(String(Math.max(minimum, next)));
+  }
+
+  function handlePriceInput(e: React.ChangeEvent<HTMLInputElement>) {
+    const el = e.target;
+    // count digits left of the caret, reformat, then put the caret back
+    // after the same number of digits
+    const digitsBeforeCaret = el.value
+      .slice(0, el.selectionStart ?? 0)
+      .replace(/\D/g, "").length;
+    const digits = el.value.replace(/\D/g, "").replace(/^0+(?=\d)/, "").slice(0, MAX_DIGITS);
+
+    const parsed = parseInt(digits || "0", 10);
+    const nextFormatted = parsed > 0 ? parsed.toLocaleString("en-US") : digits;
+    let pos = 0;
+    let seen = 0;
+    while (pos < nextFormatted.length && seen < digitsBeforeCaret) {
+      if (/\d/.test(nextFormatted[pos])) seen++;
+      pos++;
+    }
+    pendingCaret.current = pos;
+
+    setBidTouched(true);
+    setRaw(digits);
+  }
+
+  function handlePriceBlur() {
+    if (bid < minimum) setRaw(String(minimum));
   }
 
   async function submit(e: React.FormEvent) {
@@ -70,10 +154,8 @@ export default function Hero({
       setError("that is not a url or an @handle.");
       return;
     }
-    if (bid < minimum) {
-      setError(`${formatDollars(minimum * 100)} minimum. whole dollars.`);
-      return;
-    }
+    const amount = Math.max(minimum, bid);
+    if (bid < minimum) setRaw(String(minimum));
 
     setSubmitting(true);
     try {
@@ -85,7 +167,7 @@ export default function Hero({
           title: title.trim(),
           description: description.trim(),
           category,
-          amount_dollars: bid,
+          amount_dollars: amount,
         }),
       });
       const json = await res.json();
@@ -101,39 +183,48 @@ export default function Hero({
     }
   }
 
-  const priceText = `$${bid.toLocaleString("en-US")}`;
-
   return (
     <section className="hero" id="bid">
       <div className="hero-card">
-        <p className="hero-label">the top spot costs</p>
-        <div className="hero-price-row">
-          <button
-            type="button"
-            className="stepper"
-            onClick={() => step(-1)}
-            disabled={bid <= minimum}
-            aria-label="one dollar less"
-          >
-            −
-          </button>
-          <span className="hero-price" aria-label={priceText}>
-            <DigitRoll text={priceText} />
-          </span>
-          <button
-            type="button"
-            className="stepper"
-            onClick={() => step(1)}
-            aria-label="one dollar more"
-          >
-            +
-          </button>
-        </div>
-        <p className="hero-sub">
-          starts at $5. pay less than the top and you still land somewhere.
-        </p>
-
         <form onSubmit={submit}>
+          <p className="hero-label">the top spot costs</p>
+          <div className="hero-price-row">
+            <button
+              type="button"
+              className="stepper"
+              onClick={() => writeBid(bid - 1)}
+              disabled={bid <= minimum}
+              aria-label="lower the bid"
+            >
+              −
+            </button>
+            <span
+              className={`hero-price${extRoll ? " ext-roll" : ""}${firstPulse ? " first-pulse" : ""}`}
+              onClick={() => inputRef.current?.focus()}
+            >
+              <span aria-hidden="true">$</span>
+              <input
+                ref={inputRef}
+                inputMode="numeric"
+                autoComplete="off"
+                value={formatted}
+                onChange={handlePriceInput}
+                onBlur={handlePriceBlur}
+                aria-label="bid amount in dollars"
+                style={{ width: `${Math.max(1, formatted.length)}ch` }}
+              />
+            </span>
+            <button
+              type="button"
+              className="stepper"
+              onClick={() => writeBid(bid + 1)}
+              aria-label="raise the bid"
+            >
+              +
+            </button>
+          </div>
+          <p className="hero-sub">type any number. five dollars gets you on.</p>
+
           <div className="bid-form">
             <input
               id="bid-url"
@@ -156,7 +247,9 @@ export default function Hero({
               ))}
             </select>
             <button className="btn" type="submit" disabled={submitting}>
-              {submitting ? "opening checkout" : `bid ${formatDollars(bid * 100)}`}
+              {submitting
+                ? "opening checkout"
+                : `bid ${formatDollars(Math.max(minimum, bid) * 100)}`}
             </button>
           </div>
 

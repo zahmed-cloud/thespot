@@ -22,6 +22,7 @@ export const PER_PAGE = 50;
 /** real domains whose favicons resolve; everything else gets a tile */
 const REAL_FAVICON = new Set([
   "requesty.ai",
+  "outboundos.app",
   "plaintextsports.com",
   "polar.sh",
   "supabase.com",
