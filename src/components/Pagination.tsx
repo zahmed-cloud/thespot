@@ -20,8 +20,11 @@ export default function Pagination({
   perPage: number;
   category: string | null;
 }) {
+  // an empty board needs no bookkeeping under it
+  if (total === 0) return null;
+
   const pages = Math.max(1, Math.ceil(total / perPage));
-  const from = total === 0 ? 0 : (page - 1) * perPage + 1;
+  const from = (page - 1) * perPage + 1;
   const to = Math.min(page * perPage, total);
 
   return (
