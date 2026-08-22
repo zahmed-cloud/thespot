@@ -72,8 +72,8 @@ export default function Board({
           <>
             <p className="empty-big">the entire board is up for grabs.</p>
             <p className="empty-sub">
-              be the first name up here. $5 crowns you the first #1 in
-              thespot.lol history. it will never be this cheap again.
+              be the first name up here. $5 crowns you the first #1 in thespot.lol history.
+              <span className="empty-line2">it will never be this cheap again.</span>
             </p>
           </>
         )}
