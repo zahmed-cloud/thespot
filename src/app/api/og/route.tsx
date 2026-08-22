@@ -19,7 +19,8 @@ export async function GET() {
   } catch {
     // the image still renders with zeros if the db is unreachable
   }
-  const price = `$${Math.round(topCents / 100).toLocaleString("en-US")}`;
+  // an empty board's top spot costs the $5 minimum, never $0
+  const price = `$${Math.round(Math.max(500, topCents) / 100).toLocaleString("en-US")}`;
 
   const image = new ImageResponse(
     (

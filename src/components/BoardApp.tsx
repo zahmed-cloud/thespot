@@ -136,7 +136,7 @@ export default function BoardApp({
       </main>
 
       <FooterTotal totalCents={totalRaisedCents} />
-      <BidBar bidCents={data.topTotalCents + 100} />
+      <BidBar bidCents={Math.max(500, data.topTotalCents + 100)} />
     </>
   );
 }
