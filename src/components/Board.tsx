@@ -6,7 +6,7 @@ import { formatDollars, tierForRank } from "@/lib/rank";
 import type { RankedListing } from "@/lib/types";
 import LogoTile from "./LogoTile";
 
-const TILE_SIZE = { 1: 48, 2: 40, 3: 36, 4: 32 } as const;
+const TILE_SIZE = { 1: 44, 2: 38, 3: 34, 4: 30 } as const;
 
 /**
  * The board. Rows are cards. Metal treatments for #1/#2/#3, tier
@@ -83,17 +83,17 @@ export default function Board({
             )}
             {prevRank !== null && prevRank <= 3 && row.rank > 3 && (
               <li className="tier-divider" aria-hidden="true">
-                <span>top 3</span>
+                <span>4 — 10</span>
               </li>
             )}
             {prevRank !== null && prevRank <= 10 && row.rank > 10 && (
               <li className="tier-divider" aria-hidden="true">
-                <span>top 10</span>
+                <span>11 — 20</span>
               </li>
             )}
             {prevRank !== null && prevRank <= 20 && row.rank > 20 && (
               <li className="tier-divider" aria-hidden="true">
-                <span>top 20</span>
+                <span>21 and below</span>
               </li>
             )}
             <li

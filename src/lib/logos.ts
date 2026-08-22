@@ -122,10 +122,15 @@ export async function resolveFavicon(identityKey: string): Promise<string | null
         console.warn(`favicon: ${url} is ${type || "typeless"}, not an image`);
         continue;
       }
-      const bytes = (await res.arrayBuffer()).byteLength;
+      const buf = await res.arrayBuffer();
       // a real icon is bigger than a 16x16 placeholder stub
-      if (bytes < 150) {
-        console.warn(`favicon: ${url} is a ${bytes}-byte stub, skipping`);
+      if (buf.byteLength < 150) {
+        console.warn(`favicon: ${url} is a ${buf.byteLength}-byte stub, skipping`);
+        continue;
+      }
+      const dims = imageDimensions(buf);
+      if (dims && (dims.w < 16 || dims.h < 16)) {
+        console.warn(`favicon: ${url} is ${dims.w}x${dims.h}, below 16x16, skipping`);
         continue;
       }
       return url;
@@ -135,5 +140,45 @@ export async function resolveFavicon(identityKey: string): Promise<string | null
     }
   }
   console.warn(`favicon: no usable icon for ${domain}, falling back to tile`);
+  return null;
+}
+
+/**
+ * Header-sniff image dimensions for png, gif, ico, and jpeg. Returns
+ * null for formats it does not recognise (those pass through on the
+ * byte-size check alone).
+ */
+export function imageDimensions(
+  buf: ArrayBuffer
+): { w: number; h: number } | null {
+  const b = new Uint8Array(buf);
+  if (b.length < 24) return null;
+
+  // png: 8-byte signature, IHDR width/height at offsets 16/20, big-endian
+  if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) {
+    const dv = new DataView(buf);
+    return { w: dv.getUint32(16), h: dv.getUint32(20) };
+  }
+  // gif: "GIF8", width/height at 6/8, little-endian
+  if (b[0] === 0x47 && b[1] === 0x49 && b[2] === 0x46) {
+    return { w: b[6] | (b[7] << 8), h: b[8] | (b[9] << 8) };
+  }
+  // ico: reserved 0, type 1; first entry width/height at 6/7 (0 = 256)
+  if (b[0] === 0 && b[1] === 0 && b[2] === 1 && b[3] === 0 && b[4] > 0) {
+    return { w: b[6] || 256, h: b[7] || 256 };
+  }
+  // jpeg: scan markers for SOF0-SOF15 (skipping DHT/DAC/RST)
+  if (b[0] === 0xff && b[1] === 0xd8) {
+    let i = 2;
+    while (i + 9 < b.length) {
+      if (b[i] !== 0xff) return null;
+      const marker = b[i + 1];
+      const len = (b[i + 2] << 8) | b[i + 3];
+      if (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc) {
+        return { w: (b[i + 7] << 8) | b[i + 8], h: (b[i + 5] << 8) | b[i + 6] };
+      }
+      i += 2 + len;
+    }
+  }
   return null;
 }

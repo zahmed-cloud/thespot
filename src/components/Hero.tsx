@@ -34,6 +34,7 @@ export default function Hero({
   const [submitting, setSubmitting] = useState(false);
   const [extRoll, setExtRoll] = useState(false);
   const [firstPulse, setFirstPulse] = useState(false);
+  const [firstVisit, setFirstVisit] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const pendingCaret = useRef<number | null>(null);
@@ -54,13 +55,19 @@ export default function Hero({
     });
   }, [topTotalCents, bidTouched]);
 
-  // one-time first-visit affordance: a single pulse, then never again
+  // one-time first-visit affordance: a pulse and a dashed "this is
+  // editable" underline that fades after 4s. never seen again.
   useEffect(() => {
     if (localStorage.getItem("spot-priced")) return;
     localStorage.setItem("spot-priced", "1");
     setFirstPulse(true);
-    const t = setTimeout(() => setFirstPulse(false), 700);
-    return () => clearTimeout(t);
+    setFirstVisit(true);
+    const t1 = setTimeout(() => setFirstPulse(false), 700);
+    const t2 = setTimeout(() => setFirstVisit(false), 4600);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
   }, []);
 
   // restore the caret after a formatting re-render
@@ -100,19 +107,25 @@ export default function Hero({
 
   const preview = useMemo(() => {
     if (url.trim() && !identity) return "that does not look like a url or handle.";
-    const prospective = (existing?.total_paid ?? 0) + bid * 100;
-    const rank = previewRank(totals, prospective, existing);
     if (existing) {
       if (costToTopDollars === 0) {
         return `you are #1 at ${formatDollars(existing.total_paid)}. paying more builds the moat.`;
       }
-      if (rank === 1) return "this takes #1. someone will take it back.";
+      const prospective = existing.total_paid + bid * 100;
+      if (previewRank(totals, prospective, existing) === 1) {
+        return "this takes #1. someone will take it back.";
+      }
       return `you are at ${formatDollars(existing.total_paid)}. taking #1 costs ${formatDollars((costToTopDollars ?? 0) * 100)}.`;
     }
+    if (!bidTouched) {
+      // the strongest argument for a small bid: a live, real rank for $5
+      return `$5 puts you at #${previewRank(totals, 500, null)} right now.`;
+    }
+    const rank = previewRank(totals, bid * 100, null);
     return rank === 1
       ? "this takes #1. someone will take it back."
-      : `this puts you at #${rank}.`;
-  }, [url, identity, existing, bid, totals, costToTopDollars]);
+      : `${formatDollars(bid * 100)} puts you at #${rank}.`;
+  }, [url, identity, existing, bid, bidTouched, totals, costToTopDollars]);
 
   function writeBid(next: number) {
     setBidTouched(true);
@@ -199,7 +212,7 @@ export default function Hero({
               −
             </button>
             <span
-              className={`hero-price${extRoll ? " ext-roll" : ""}${firstPulse ? " first-pulse" : ""}`}
+              className={`hero-price${extRoll ? " ext-roll" : ""}${firstPulse ? " first-pulse" : ""}${firstVisit ? " first-visit" : ""}`}
               onClick={() => inputRef.current?.focus()}
             >
               <span aria-hidden="true">$</span>
@@ -223,7 +236,10 @@ export default function Hero({
               +
             </button>
           </div>
-          <p className="hero-sub">type any number. five dollars gets you on.</p>
+          <p className="hero-sub">
+            this is just the top.
+            <span className="instruction">type any number — $5 gets you listed.</span>
+          </p>
 
           <div className="bid-form">
             <input
@@ -276,7 +292,6 @@ export default function Hero({
 
           <p className="hero-note">{preview}</p>
           {error && <p className="hero-error">{error}</p>}
-          <p className="hero-hint">already up there? same url, pay the difference.</p>
         </form>
       </div>
     </section>

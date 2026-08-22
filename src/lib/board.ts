@@ -22,7 +22,6 @@ export const PER_PAGE = 50;
 /** real domains whose favicons resolve; everything else gets a tile */
 const REAL_FAVICON = new Set([
   "requesty.ai",
-  "outboundos.app",
   "plaintextsports.com",
   "polar.sh",
   "supabase.com",
@@ -33,7 +32,7 @@ const DEMO_TOP: Array<[string, string, string, string, number, number]> = [
   ["requesty.ai", "requesty", "one api for every llm", "ai-tools", 14023, 1113],
   ["outboundos.app", "outbound os", "free linkedin client-getting tool", "marketing", 8100, 642],
   ["x:jamil", "@jamil", "posts about building things", "other", 5250, 398],
-  ["github.com/shipfast", "ship fast club", "accountability group for launching", "dev-tools", 3000, 261],
+  ["shipfast.club", "ship fast club", "accountability group for launching", "dev-tools", 3000, 261],
   ["ratemysetup.lol", "rate my setup", "strangers judge your desk", "design", 2400, 244],
   ["tinyinvoice.co", "tiny invoice", "invoices for people who hate invoices", "saas", 1900, 187],
   ["quietletter.substack.com", "quiet letter", "a slow newsletter about focus", "newsletters", 1500, 149],
@@ -42,7 +41,7 @@ const DEMO_TOP: Array<[string, string, string, string, number, number]> = [
   ["plaintextsports.com", "plain text sports", "scores with zero javascript", "games", 850, 112],
   ["darkmodemaker.com", "dark mode maker", "adds dark mode to any site", "dev-tools", 720, 96],
   ["youtube.com/@buildinpublic", "build in public", "weekly teardown videos", "marketing", 640, 88],
-  ["chartpaste.com", "chart paste", "paste data, get a chart", "dev-tools", 560, 81],
+  ["github.com/chartpaste", "chart paste", "paste data, get a chart", "dev-tools", 560, 81],
   ["copydeck.ai", "copy deck", "landing page copy that converts", "marketing", 500, 74],
   ["stackedwallet.xyz", "stacked wallet", "watch every chain in one place", "crypto", 450, 69],
   ["twitch.tv/latenightdev", "late night dev", "live coding at 2am", "games", 400, 61],
