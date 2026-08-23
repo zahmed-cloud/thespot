@@ -3,19 +3,27 @@
 import { useEffect, useState } from "react";
 import DigitRoll from "./DigitRoll";
 
-const LAUNCH_AT = process.env.NEXT_PUBLIC_LAUNCH_AT ?? "2026-08-23T00:00:00Z";
-
-/** The screenshot-bait number, with the same digit roll as the hero. */
-export default function FooterTotal({ totalCents }: { totalCents: number }) {
-  const [hours, setHours] = useState(() => hoursSinceLaunch());
+/**
+ * The screenshot-bait number. Appears only once real money exists, and
+ * the clock counts from the actual first payment (the oldest listing's
+ * created_at) — real time, true time, no config, no lies.
+ */
+export default function FooterTotal({
+  totalCents,
+  firstPaidAt,
+}: {
+  totalCents: number;
+  firstPaidAt: string | null;
+}) {
+  const [, tick] = useState(0);
 
   useEffect(() => {
-    const t = setInterval(() => setHours(hoursSinceLaunch()), 60_000);
+    const t = setInterval(() => tick((n) => n + 1), 60_000);
     return () => clearInterval(t);
   }, []);
 
   // pre-launch: no money, no band. it appears with the first payment.
-  if (totalCents <= 0) return null;
+  if (totalCents <= 0 || !firstPaidAt) return null;
 
   const text = `$${Math.round(totalCents / 100).toLocaleString("en-US")}`;
 
@@ -27,13 +35,15 @@ export default function FooterTotal({ totalCents }: { totalCents: number }) {
         <DigitRoll text={text} />
       </p>
       <p className="hours" suppressHydrationWarning>
-        since it went up {hours.toLocaleString("en-US")}{" "}
-        {hours === 1 ? "hour" : "hours"} ago
+        since it went up {elapsed(firstPaidAt)} ago
       </p>
     </section>
   );
 }
 
-function hoursSinceLaunch(): number {
-  return Math.max(1, Math.floor((Date.now() - new Date(LAUNCH_AT).getTime()) / 36e5));
+function elapsed(iso: string): string {
+  const mins = Math.max(1, Math.floor((Date.now() - new Date(iso).getTime()) / 60_000));
+  if (mins < 60) return `${mins} ${mins === 1 ? "minute" : "minutes"}`;
+  const hours = Math.floor(mins / 60);
+  return `${hours.toLocaleString("en-US")} ${hours === 1 ? "hour" : "hours"}`;
 }

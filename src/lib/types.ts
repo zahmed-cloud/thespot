@@ -35,6 +35,8 @@ export type BoardPage = {
   perPage: number;
   topTotalCents: number;
   totals: BoardTotal[];
+  /** created_at of the oldest listing — the moment of the first payment */
+  firstPaidAt: string | null;
 };
 
 export type BoardStats = {

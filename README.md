@@ -40,8 +40,11 @@ CLICK_SALT=                  # any long random string, salts click-dedupe ip has
 NEXT_PUBLIC_SUPABASE_URL=    # same value as SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 NEXT_PUBLIC_SITE_URL=https://thespot.lol
-NEXT_PUBLIC_LAUNCH_AT=       # iso timestamp; the "since it went up N hours ago" counter
 ```
+
+the "people have paid … since it went up N hours ago" band needs no
+config: it appears with the first payment and counts from the oldest
+listing's created_at. real time, derived from the data.
 
 ## setup, in order
 

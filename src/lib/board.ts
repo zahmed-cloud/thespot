@@ -149,6 +149,12 @@ export async function getBoardPage(
     : all;
 
   const safePage = Math.max(1, Math.min(page, Math.max(1, Math.ceil(scoped.length / PER_PAGE))));
+  // the clock starts at the first payment, derived from the data —
+  // never from a config value someone has to remember to set
+  const firstPaidAt = all.reduce<string | null>(
+    (min, r) => (min === null || r.created_at < min ? r.created_at : min),
+    null
+  );
   return {
     rows: scoped.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE),
     total: scoped.length,
@@ -160,6 +166,7 @@ export async function getBoardPage(
       total_paid,
       created_at,
     })),
+    firstPaidAt,
   };
 }
 
