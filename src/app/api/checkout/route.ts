@@ -162,14 +162,15 @@ export async function POST(req: Request) {
       returnUrl: `${site}/cancelled`,
       // metadata identifies WHO. the webhook reads the amount from the
       // order object, never from here, so a tampered checkout url cannot
-      // buy a bigger total than was actually paid.
+      // buy a bigger total than was actually paid. polar rejects
+      // empty-string values, so optional fields are omitted when empty.
       metadata: {
         identity_key: identity.identityKey,
         display_url: identity.displayUrl,
         title: cleanTitle,
-        description: desc,
+        ...(desc ? { description: desc } : {}),
         category,
-        favicon_url: logo ?? "",
+        ...(logo ? { favicon_url: logo } : {}),
         bid_cents: String(bidCents),
         is_topup: String(isTopup),
         existing_total_cents: String(existing?.total_paid ?? 0),
