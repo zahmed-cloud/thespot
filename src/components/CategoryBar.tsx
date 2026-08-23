@@ -17,6 +17,21 @@ export default function CategoryBar({ active }: { active: string | null }) {
   // keep local state in sync when navigation lands
   useEffect(() => setSelected(active), [active]);
 
+  // when the bar overflows, hovering it and rolling the wheel slides
+  // the hidden chips into view from the right
+  useEffect(() => {
+    const bar = barRef.current;
+    if (!bar) return;
+    const onWheel = (e: WheelEvent) => {
+      if (bar.scrollWidth <= bar.clientWidth) return;
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+      e.preventDefault();
+      bar.scrollLeft += e.deltaY;
+    };
+    bar.addEventListener("wheel", onWheel, { passive: false });
+    return () => bar.removeEventListener("wheel", onWheel);
+  }, []);
+
   useLayoutEffect(() => {
     const bar = barRef.current;
     const pill = pillRef.current;

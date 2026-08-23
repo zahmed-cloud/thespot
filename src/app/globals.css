@@ -682,6 +682,11 @@ button {
   padding: 4px;
   display: flex;
   gap: 2px;
+  /* the control hugs its content and sits centred, like a real
+     segmented control; it only widens to the column when it must scroll */
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
   overflow-x: auto;
   scrollbar-width: none;
   mask-image: linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
