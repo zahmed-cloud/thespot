@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { cookies } from "next/headers";
 import Link from "next/link";
@@ -119,6 +120,7 @@ export default async function RootLayout({
           <Link href="/privacy">privacy</Link>
           <Link href="/refunds">refunds</Link>
         </footer>
+        <Analytics />
       </body>
     </html>
   );
